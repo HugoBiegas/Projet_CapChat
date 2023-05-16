@@ -8,6 +8,14 @@ router.get('/', (req, res) => {
   res.sendFile('C:/Users/anime/OneDrive/Documents/GitHub/Projet_CapChat/server/views/index.html');
 });
 
+router.get('/inscription', (req, res) => {
+    res.sendFile('C:/Users/anime/OneDrive/Documents/GitHub/Projet_CapChat/server/views/inscription.html');
+});
+  
+  router.get('/connexion', (req, res) => {
+    res.sendFile('C:/Users/anime/OneDrive/Documents/GitHub/Projet_CapChat/server/views/connexion.html');
+});
+  
 router.post('/inscription', (req, res) => {
   // Code de gestion de l'inscription
 });

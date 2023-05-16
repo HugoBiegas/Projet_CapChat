@@ -3,29 +3,14 @@
 <html>
 <head>
   <title>Inscription / Connexion</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-  <h1>Inscription</h1>
-  <form action="/inscription" method="POST">
-    <label for="username">Nom d'utilisateur:</label>
-    <input type="text" id="username" name="username" required><br>
-
-    <label for="password">Mot de passe:</label>
-    <input type="password" id="password" name="password" required><br>
-
-    <input type="submit" value="S'inscrire">
-  </form>
-
-  <h1>Connexion</h1>
-  <form action="/connexion" method="POST">
-    <label for="username">Nom d'utilisateur:</label>
-    <input type="text" id="username" name="username" required><br>
-
-    <label for="password">Mot de passe:</label>
-    <input type="password" id="password" name="password" required><br>
-    <input type="submit" value="Se connecter">
-</form>
+  <a href="/inscription">
+    <button type="button">Inscription</button>
+  </a>
+  <a href="/connexion">
+    <button type="button">Connexion</button>
+  </a>
 </body>
 </html>
-
-    
