@@ -20,7 +20,7 @@ con.connect(function(err) {
   const artistName = 'Hugo';
   const themeName = 'Général';
   const setName = 'Général';
-  const folderPath = 'C:\\Users\\anime\\OneDrive\\Documents\\GitHub\\Projet_CapChat\\CapChat\\neutres';
+  const folderPath = 'C:\\Users\\anime\\OneDrive\\Documents\\GitHub\\Projet_CapChat\\server\\views\\image\\neutres';
 
   bcrypt.hash(password, 10, function(err, hash) {
     if (err) throw err;
@@ -43,7 +43,7 @@ con.connect(function(err) {
             if (err) throw err;
 
             const themeID = result[0].ID;
-            con.query("INSERT INTO ImageSets (UserID, ThemeID, Name) VALUES (?, ?, ?)", [userID, themeID, setName], async function(err, result) {
+            con.query("INSERT INTO ImageSets (UserID, ThemeID, Name,URLUsage) VALUES (?, ?, ?, ?)", [userID, themeID, setName,'general'], async function(err, result) {
               if (err) throw err;
               console.log("ImageSet inserted");
 

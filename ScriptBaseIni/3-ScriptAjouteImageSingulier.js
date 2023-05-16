@@ -15,7 +15,7 @@ connection.connect((err) => {
   console.log('Connecté à la base de données MySQL!');
 });
 
-const directoryPath = path.join('C:\\Users\\anime\\OneDrive\\Documents\\GitHub\\Projet_CapChat\\CapChat\\singuliers'); // Le répertoire des images
+const directoryPath = path.join('C:\\Users\\anime\\OneDrive\\Documents\\GitHub\\Projet_CapChat\\server\\views\\image\\singuliers'); // Le répertoire des images
 
 const questions = [];
 
@@ -50,7 +50,7 @@ function insertImageAsync(imagePath, question) {
 async function insertImagesInOrder() {
   try {
     // Lire le fichier Indice
-    const indiceFilePath = 'C:\\Users\\anime\\OneDrive\\Documents\\GitHub\\Projet_CapChat\\CapChat\\Indices_singuliers.txt';
+    const indiceFilePath = 'C:\\Users\\anime\\OneDrive\\Documents\\GitHub\\Projet_CapChat\\server\\views\\image\\Indices_singuliers.txt';
     const indiceContent = await readFileAsync(indiceFilePath);
     const lines = indiceContent.split('\n');
     lines.forEach(line => {

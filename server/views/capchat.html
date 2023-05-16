@@ -1,29 +1,52 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CapChat</title>
-  <style>
-    .image-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
-    }
-    .image-container img {
-      margin: 10px;
-      width: 200px;
-      height: 200px;
-    }
-  </style>
 </head>
 <body>
-  <h1 id="question">Question</h1>
+  <h1>CapChat</h1>
 
-  <div class="image-container" id="imageContainer">
-    <!-- Les images seront injectées ici par le JavaScript -->
-  </div>
+  <h2>Images Neutres</h2>
+  <div id="neutre-images"></div>
+  <img src="/images/chat_neutre_1.jpg" alt="Image neutre">
 
-  <script src="capchat.js"></script>
+  <h2>Image Singulière</h2>
+  <div id="singuliere-image"></div>
+  <div id="singuliere-question"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var urlUsage = window.location.pathname.split("/").pop();
+      console.log(urlUsage);
+
+      fetch('/api/capchat/'+urlUsage) 
+        .then(response => response.json())
+        .then(data => {
+          const capchat = data.capchat;
+          const imagesNeutres = data.imagesNeutres;
+          const imageSinguliere = data.imageSinguliere;
+          const neutreImagesContainer = document.getElementById('neutre-images');
+          const singuliereImageContainer = document.getElementById('singuliere-image');
+          const singuliereQuestionContainer = document.getElementById('singuliere-question');
+
+          // Afficher les images neutres
+          imagesNeutres.forEach(image => {
+            const img = document.createElement('img');
+            img.src = `/neutres/${image.FilePath}`;
+            neutreImagesContainer.appendChild(img);
+          });
+
+          // Afficher l'image singulière et sa question
+          const imgSinguliere = document.createElement('img');
+          imgSinguliere.src = `/singuliers/${imageSinguliere.FilePath}`;
+          singuliereImageContainer.appendChild(imgSinguliere);
+
+          const singuliereQuestion = document.createElement('p');
+          singuliereQuestion.textContent = imageSinguliere.Question;
+          singuliereQuestionContainer.appendChild(singuliereQuestion);
+        })
+        .catch(error => console.log(error));
+    });
+  </script>
 </body>
 </html>

@@ -27,12 +27,12 @@ router.get('/api/capchat/:urlUsage', (req, res) => {
             return res.status(404).send('CapChat non trouvé');
         }
         const capchat = results[0];
-        connection.query(`SELECT Image FROM Images WHERE ImageSetID = ? AND IsSingular = FALSE`, [capchat.ID], function (error, results, fields) {
+        connection.query(`SELECT FilePath FROM Images WHERE ImageSetID = ? AND IsSingular = FALSE`, [capchat.ID], function (error, results, fields) {
             if (error) {
                 return res.status(500).send(error);
             }
             const imagesNeutres = results;
-            connection.query(`SELECT Image,Question FROM Images WHERE ImageSetID = ? AND IsSingular = TRUE`, [capchat.ID], function (error, results, fields) {
+            connection.query(`SELECT FilePath,Question FROM Images WHERE ImageSetID = ? AND IsSingular = TRUE`, [capchat.ID], function (error, results, fields) {
                 if (error) {
                     return res.status(500).send(error);
                 }
