@@ -1,0 +1,43 @@
+voici la liste des taches : 
+Sprint 1 (23/05) - Durée approximative: 1 semaine
+
+    -Analyse des besoins et compréhension du cahier des charges - 6 heures
+    -Conception de l'architecture générale du système - 6 heures
+    -Création de la structure de base de l'application côté serveur et côté client - 10 heures
+
+Sprint 2 (30/05) - Durée approximative: 1 semaine
+
+    -Mise en place de l'API REST pour l'inscription et l'authentification des utilisateurs - 6 heures
+    -Implémentation de la fonctionnalité d'affichage des images originales côté client - 6 heures
+    -Intégration du thermomètre dynamique pour le compte à rebours - 6 heures
+    -Mise en place du chargement dynamique des nouvelles créations d'artistes - 3 heures
+
+Sprint 3 - Durée approximative: 1 semaine
+
+    -Création de la fonctionnalité de dépôt de jeu d'images CaptChat pour les artistes - 9 heures
+    -Implémentation de la modération des jeux d'images - 6 heures
+    -Intégration du formulaire d'inscription/connexion pour les artistes - 6 heures
+
+Sprint 4 - Durée approximative: 1 semaine
+
+    -Mise en place de l'intégration simple du CaptChat dans n'importe quelle page HTML - 6 heures
+    -Implémentation de la validation du CaptChat et de la redirection vers une URL définie - 6 heures
+    -Améliorations de l'interface utilisateur - 6 heures
+    -Tests et correction des bugs - 3 heures
+
+Sprint 5 - Durée approximative: 1 semaine
+
+    -Finalisation de la documentation du projet - 6 heures
+    -Réalisation de tests de performance et d'optimisation - 6 heures
+    -Préparation de l'environnement de déploiement pour la mise en ligne - 6 heures
+    -Revue finale du code et des fonctionnalités - 3 heures
+
+Bilant des sprint (gain/depassement de temps, Problémes rencontrées):
+Sprint 1 :
+Sprint 2 :
+Sprint 3 :
+Sprint 4 :
+Sprint 5 :
+
+Identifier les resources 'Manquantes' (modul, extention...) et comptabiliser le temps passer a la recherche
+
