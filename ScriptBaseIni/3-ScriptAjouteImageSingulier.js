@@ -36,8 +36,8 @@ function insertImageAsync(imagePath, question) {
       if (err) reject(err);
       else {
         const imageBase64 = data.toString('base64');
-        const sql = `INSERT INTO Images (ImageSetID, IsSingular, Image, Question) VALUES (1, true, ?, ?)`;
-        connection.query(sql, [imageBase64, question], (err, result) => {
+        const sql = `INSERT INTO Images (ImageSetID, IsSingular, FilePath, Question) VALUES (1, true, ?, ?)`;
+        connection.query(sql, [imagePath, question], (err, result) => {
           if (err) reject(err);
           else resolve(result);
         });
@@ -78,12 +78,12 @@ async function insertImagesInOrder() {
       console.log(`Image "${file}" insérée avec succès!`);
     }
     // Fermer la connexion à la base de données
-connection.end();
-} catch (err) {
-  console.error(err);
-  connection.end();
+    connection.end();
+  } catch (err) {
+    console.error(err);
+    connection.end();
   }
-  }
-  
-  // Appeler la fonction principale pour insérer les images dans l'ordre
-  insertImagesInOrder();
+}
+
+// Appeler la fonction principale pour insérer les images dans l'ordre
+insertImagesInOrder();

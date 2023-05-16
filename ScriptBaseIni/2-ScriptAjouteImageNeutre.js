@@ -1,10 +1,10 @@
-var mysql = require('mysql');
-var bcrypt = require('bcrypt');
-var crypto = require('crypto');
-var fs = require('fs').promises;
-var path = require('path');
+const mysql = require('mysql');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const fs = require('fs').promises;
+const path = require('path');
 
-var con = mysql.createConnection({
+const con = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
@@ -15,78 +15,69 @@ con.connect(function(err) {
   if (err) throw err;
   console.log("Connected!");
 
-  var username = 'root';
-  var password = 'root';
-  var artistName = 'Hugo';
-  var themeName = 'Général';
-  var setName = 'Général';
-  var folderPath = 'C:\\Users\\anime\\OneDrive\\Documents\\GitHub\\Projet_CapChat\\CapChat\\neutres';
+  const username = 'root';
+  const password = 'root';
+  const artistName = 'Hugo';
+  const themeName = 'Général';
+  const setName = 'Général';
+  const folderPath = 'C:\\Users\\anime\\OneDrive\\Documents\\GitHub\\Projet_CapChat\\CapChat\\neutres';
 
   bcrypt.hash(password, 10, function(err, hash) {
     if (err) throw err;
-    var token = crypto.randomBytes(64).toString('hex');
+    const token = crypto.randomBytes(64).toString('hex');
 
-    con.query("INSERT INTO Users (Username, Password, Token) VALUES (?, ?, ?)", [username, hash, token], function(err, result) {
+    con.query("INSERT INTO Users (Username, Password, NameArtiste) VALUES (?, ?, ?)", [username, hash, artistName], function(err, result) {
       if (err) throw err;
       console.log("User inserted");
 
       con.query("SELECT ID FROM Users WHERE Username = ?", [username], function(err, result) {
         if (err) throw err;
 
-        var userID = result[0].ID;
-        con.query("INSERT INTO Artists (UserID, Name) VALUES (?, ?)", [userID, artistName], function(err, result) {
+        const userID = result[0].ID;
+
+        con.query("INSERT INTO Themes (Name) VALUES (?)", [themeName], function(err, result) {
           if (err) throw err;
-          console.log("Artist inserted");
+          console.log("Theme inserted");
 
-          con.query("INSERT INTO Themes (Name) VALUES (?)", [themeName], function(err, result) {
+          con.query("SELECT ID FROM Themes WHERE Name = ?", [themeName], function(err, result) {
             if (err) throw err;
-            console.log("Theme inserted");
 
-            con.query("SELECT ID FROM Artists WHERE Name = ?", [artistName], function(err, result) {
+            const themeID = result[0].ID;
+            con.query("INSERT INTO ImageSets (UserID, ThemeID, Name) VALUES (?, ?, ?)", [userID, themeID, setName], async function(err, result) {
               if (err) throw err;
+              console.log("ImageSet inserted");
 
-              var artistID = result[0].ID;
-              con.query("SELECT ID FROM Themes WHERE Name = ?", [themeName], function(err, result) {
-                if (err) throw err;
+              try {
+                const files = await fs.readdir(folderPath);
 
-                var themeID = result[0].ID;
-                con.query("INSERT INTO ImageSets (ArtistID, ThemeID, Name) VALUES (?, ?, ?)", [artistID, themeID, setName], async function(err, result) {
-                if (err) throw err;
-                  console.log("ImageSet inserted");
+                files.sort(function(a, b) {
+                  const numA = parseInt(a.split('chat neutre ')[1]);
+                  const numB = parseInt(b.split('chat neutre ')[1]);
+                  return numA - numB;
+                });
 
-                try {
-                  let files = await fs.readdir(folderPath);
-
-                  files.sort(function(a, b) {
-                    var numA = parseInt(a.split('chat neutre ')[1]);
-                    var numB = parseInt(b.split('chat neutre ')[1]);
-                    return numA - numB;
-                  });
-
-                    for (let i = 0; i < files.length; i++) {
-                      let file = files[i];
-                      let filePath = path.join(folderPath, file);
-                      let data = await fs.readFile(filePath);
-                      await new Promise((resolve, reject) => {
-                      con.query("INSERT INTO Images (ImageSetID, IsSingular, Image, Question) SELECT ImageSets.ID, false, ?, NULL FROM ImageSets WHERE ImageSets.Name = ?", [data, setName], function(err, result) {
+                for (let i = 0; i < files.length; i++) {
+                  const file = files[i];
+                  const filePath = path.join(folderPath, file);
+                  const data = await fs.readFile(filePath, 'utf8');
+                  await new Promise((resolve, reject) => {
+                    con.query("INSERT INTO Images (ImageSetID, IsSingular, FilePath, Question) SELECT ImageSets.ID, false, ?, NULL FROM ImageSets WHERE ImageSets.Name = ?", [filePath, setName], function(err, result) {
                       if (err) {
                         reject(err);
                         return;
                       }
                       console.log("Image added: " + file);
                       resolve();
-                      });
                     });
-                  }
-                  con.end(function(err) {
-                  if (err) throw err;
-                    console.log('Connection ended');
                   });
-                  } catch (err) {
-                    console.error(err);
-                  }
+                }
+                con.end(function(err) {
+                  if (err) throw err;
+                  console.log('Connection ended');
                 });
-              });
+              } catch (err) {
+                console.error(err);
+              }
             });
           });
         });

@@ -1,0 +1,109 @@
+Suivi du Sprint 1 (23/05 - 29/05)
+
+Analyse des besoins et compréhension du cahier des charges
+
+    Statut : Terminée
+    Temps estimé : 6 heures
+    Temps réellement passé : 8 heures
+    Commentaires : L'analyse des besoins a pris un peu plus de temps que prévu en raison de certaines parties du cahier des charges nécessitant des clarifications supplémentaires.
+
+Conception de l'architecture générale du système
+
+    Statut : Terminée
+    Temps estimé : 6 heures
+    Temps réellement passé : 5 heures
+    Commentaires : La conception de l'architecture s'est déroulée plus rapidement que prévu grâce à une bonne compréhension des exigences et des choix technologiques préalablement effectués.
+
+Création de la structure de base de l'application côté serveur et côté client
+
+    Statut : En cours
+    Temps estimé : 10 heures
+    Temps réellement passé : 6 heures
+    Commentaires : La structure de base de l'application a été mise en place côté serveur. La mise en place côté client est en cours et devrait être terminée d'ici la fin du sprint.
+
+Suivi du Sprint 2 (30/05 - 05/06)
+
+Mise en place de l'API REST pour l'inscription et l'authentification des utilisateurs
+
+    Statut : En cours
+    Temps estimé : 6 heures
+    Temps réellement passé : 4 heures
+    Commentaires : La mise en place de l'API REST est en cours et progresse selon les estimations. Quelques ajustements mineurs sont nécessaires pour finaliser cette tâche.
+
+Implémentation de la fonctionnalité d'affichage des images originales côté client
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Intégration du thermomètre dynamique pour le compte à rebours
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Mise en place du chargement dynamique des nouvelles créations d'artistes
+
+    Statut : Non démarrée
+    Temps estimé : 3 heures
+
+Suivi du Sprint 3 (06/06 - 12/06)
+
+Création de la fonctionnalité de dépôt de jeu d'images CaptChat pour les artistes
+
+    Statut : En cours
+    Temps estimé : 9 heures
+    Temps réellement passé : 7 heures
+    Commentaires : La fonctionnalité de dépôt de jeu d'images CaptChat est en cours de développement. L'implémentation de la logique de téléchargement des archives (.zip) est presque terminée.
+
+Implémentation de la modération des jeux d'images
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Intégration du formulaire d'inscription/connexion pour les artistes
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Suivi du Sprint 4 (13/06 - 19/06)
+
+Mise en place de l'intégration simple du CaptChat dans n'importe quelle page HTML
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Implémentation de la validation du CaptChat et de la redirection vers une URL définie
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Améliorations de l'interface utilisateur
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Tests et correction des bugs
+
+    Statut : Non démarrée
+    Temps estimé : 3 heures
+
+Suivi du Sprint 5 (20/06 - 26/06)
+
+Finalisation de la documentation du projet
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Réalisation de tests de performance et d'optimisation
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Préparation de l'environnement de déploiement pour la mise en ligne
+
+    Statut : Non démarrée
+    Temps estimé : 6 heures
+
+Revue finale du code et des fonctionnalités
+
+    Statut : Non démarrée
+    Temps estimé : 3 heures
