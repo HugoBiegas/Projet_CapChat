@@ -62,9 +62,8 @@
     </div>
     <div class="question" id="question"></div>
     <div class="grid-container" id="image-container"></div>
-
+    
     <script>
-        
         // Définition d'une fonction pour obtenir des éléments aléatoires à partir d'un tableau
         function getRandomElements(arr, count) {
             const shuffled = [...arr];
@@ -74,18 +73,18 @@
             }
             return shuffled.slice(0, count);
         }
-        
+    
         function updateThermometer(remainingTime) {
             const thermometerInner = document.getElementById('thermometer-inner');
             const percentage = (remainingTime / 30) * 100;
             const red = Math.round(255 - (255 * (remainingTime / 30)));
             const green = Math.round(255 * (remainingTime / 30));
             const color = `rgb(${red}, ${green}, 0)`;
-
+    
             thermometerInner.style.width = `${percentage}%`;
             thermometerInner.style.backgroundColor = color;
         }
-
+    
         // Attente de l'événement DOMContentLoaded
         document.addEventListener('DOMContentLoaded', (event) => {
             // Obtention du chemin de l'URL actuelle
@@ -106,9 +105,9 @@
                     remainingTime--;
                     document.getElementById('timer').innerText = remainingTime;
                     updateThermometer(remainingTime);
-                    if (remainingTime === 0) {
+                    if (remainingTime <= 5) {
                         clearInterval(timerInterval);
-                        location.reload();
+                        window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
                     }
                 }, 1000);
             }
@@ -123,12 +122,19 @@
             function handleImageClick(index) {
                 const imageElements = document.getElementsByClassName('capchat-image');
                 const clickedImage = imageElements[index];
-    
+                
                 // Vérification si l'image cliquée est une image singulière
                 if (clickedImage.dataset.isSinguliere === 'true') {
-                    window.location.href = '/'; // Redirection vers la page d'accueil
+                    clearInterval(timerInterval);
+                    window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
                 } else {
-                    refreshCapChat(); // Rafraîchissement du CAPTCHA
+                    remainingTime = remainingTime-5;
+                    if(remainingTime === 0){
+                        clearInterval(timerInterval);
+                        window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
+                    }else{
+                        refreshCapChat(); // Rafraîchissement du CAPTCHA
+                    }
                 }
             }
     
@@ -169,6 +175,5 @@
             });
         });
     </script>
-        
 </body>
 </html>

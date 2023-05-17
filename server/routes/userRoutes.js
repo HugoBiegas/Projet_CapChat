@@ -52,7 +52,7 @@ router.get('/api/capchat/:urlUsage', (req, res) => {
 });
 
 
-router.get('/capchat/:urlUsage', (req, res) => {
+router.get('*/capchat/:urlUsage', (req, res) => {
     const urlUsage = req.params.urlUsage;
     connection.query(`SELECT * FROM ImageSets WHERE URLUsage = ?`, [urlUsage], function (error, results, fields) {
         if (error) {
