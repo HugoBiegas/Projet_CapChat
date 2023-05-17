@@ -2,8 +2,16 @@
 const express = require('express');
 const connection = require('../dbConfig');
 const path = require('path');  // Ajoutez ceci en haut de votre fichier
+const fs = require('fs');
+const cors = require('cors');
 
 const router = express.Router();
+
+router.use(cors());
+
+router.use('/views/image/neutres', express.static(path.join(__dirname, '..', 'views', 'image', 'neutres')));
+router.use('/views/image/singuliers', express.static(path.join(__dirname, '..', 'views', 'image', 'singuliers')));
+
 
 router.get('/', (req, res) => {
   res.sendFile('C:/Users/anime/OneDrive/Documents/GitHub/Projet_CapChat/server/views/index.html');
@@ -36,8 +44,8 @@ router.get('/api/capchat/:urlUsage', (req, res) => {
                 if (error) {
                     return res.status(500).send(error);
                 }
-                const imageSinguliere = results[0];
-                res.json({capchat, imagesNeutres, imageSinguliere});
+                const imageSinguliere = results;
+                res.json({imagesNeutres, imageSinguliere});
             });
         });
     });

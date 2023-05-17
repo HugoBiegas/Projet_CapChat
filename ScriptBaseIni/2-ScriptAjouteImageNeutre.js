@@ -61,7 +61,7 @@ con.connect(function(err) {
                   const filePath = path.join(folderPath, file);
                   const data = await fs.readFile(filePath, 'utf8');
                   await new Promise((resolve, reject) => {
-                    con.query("INSERT INTO Images (ImageSetID, IsSingular, FilePath, Question) SELECT ImageSets.ID, false, ?, NULL FROM ImageSets WHERE ImageSets.Name = ?", [filePath, setName], function(err, result) {
+                    con.query("INSERT INTO Images (ImageSetID, IsSingular, FilePath, Question) SELECT ImageSets.ID, false, ?, NULL FROM ImageSets WHERE ImageSets.Name = ?", [path.basename(filePath), setName], function(err, result) {
                       if (err) {
                         reject(err);
                         return;
