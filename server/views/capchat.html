@@ -56,124 +56,145 @@
 </head>
 <body>
     <h1>Capchat</h1>
-    <div class="timer" id="timer">30</div>
+    <div class="timer" id="timer"></div>
     <div class="thermometer">
         <div class="thermometer-inner" id="thermometer-inner"></div>
     </div>
     <div class="question" id="question"></div>
     <div class="grid-container" id="image-container"></div>
-    
     <script>
-        // Définition d'une fonction pour obtenir des éléments aléatoires à partir d'un tableau
-        function getRandomElements(arr, count) {
-            const shuffled = [...arr];
-            for (let i = shuffled.length; i--; ) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled.slice(0, count);
-        }
-    
-        function updateThermometer(remainingTime) {
-            const thermometerInner = document.getElementById('thermometer-inner');
-            const percentage = (remainingTime / 30) * 100;
-            const red = Math.round(255 - (255 * (remainingTime / 30)));
-            const green = Math.round(255 * (remainingTime / 30));
-            const color = `rgb(${red}, ${green}, 0)`;
-    
-            thermometerInner.style.width = `${percentage}%`;
-            thermometerInner.style.backgroundColor = color;
-        }
-    
-        // Attente de l'événement DOMContentLoaded
-        document.addEventListener('DOMContentLoaded', (event) => {
-            // Obtention du chemin de l'URL actuelle
-            const urlPathname = window.location.pathname;
-            // Séparation des segments de l'URL en utilisant '/'
-            const urlSegments = urlPathname.split('/');
-            // Recherche de l'index du segment 'capchat' dans les segments de l'URL
-            const urlUsageIndex = urlSegments.findIndex(segment => segment === 'capchat') + 1;
-            // Obtention de la valeur du segment suivant 'capchat' dans l'URL
-            const urlUsage = urlSegments[urlUsageIndex];
-    
-            let remainingTime = 30; // Temps restant initial (en secondes)
-            let timerInterval; // Variable pour stocker l'intervalle du minuteur
-    
-            // Fonction pour démarrer le minuteur
-            function startTimer() {
-                timerInterval = setInterval(() => {
-                    remainingTime--;
-                    document.getElementById('timer').innerText = remainingTime;
-                    updateThermometer(remainingTime);
-                    if (remainingTime <= 5) {
-                        clearInterval(timerInterval);
-                        window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
-                    }
-                }, 1000);
-            }
-    
-            // Fonction pour rafraîchir le CAPTCHA
-            function refreshCapChat() {
-                clearInterval(timerInterval); // Arrêt du minuteur
-                location.reload(); // Rechargement de la page
-            }
-    
-            // Fonction pour gérer le clic sur une image
-            function handleImageClick(index) {
-                const imageElements = document.getElementsByClassName('capchat-image');
-                const clickedImage = imageElements[index];
-                
-                // Vérification si l'image cliquée est une image singulière
-                if (clickedImage.dataset.isSinguliere === 'true') {
-                    clearInterval(timerInterval);
-                    window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
+function getRandomElements(arr, count) {
+    const shuffled = [...arr];
+    for (let i = shuffled.length; i--; ) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, count);
+}
+
+function updateThermometer(remainingTime, totalTime) {
+    const thermometerInner = document.getElementById('thermometer-inner');
+    const percentage = (remainingTime / totalTime) * 100;
+    const red = Math.round(255 - (255 * (remainingTime / totalTime)));
+    const green = Math.round(255 * (remainingTime / totalTime));
+    const color = `rgb(${red}, ${green}, 0)`;
+
+    thermometerInner.style.width = `${percentage}%`;
+    thermometerInner.style.backgroundColor = color;
+}
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    const urlPathname = window.location.pathname;
+    const urlSegments = urlPathname.split('/');
+    const urlUsageIndex = urlSegments.findIndex(segment => segment === 'capchat') + 1;
+    const urlUsage = urlSegments[urlUsageIndex];
+
+    let totalTime = localStorage.getItem('totalTime') ? parseInt(localStorage.getItem('totalTime')) : 30;
+    let remainingTime = localStorage.getItem('remainingTime') ? parseInt(localStorage.getItem('remainingTime')) : totalTime;
+    let timerInterval;
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            remainingTime--;
+            localStorage.setItem('remainingTime', remainingTime);
+            document.getElementById('timer').innerText = remainingTime;
+            updateThermometer(remainingTime, totalTime);
+            if (remainingTime <= 0) {
+                clearInterval(timerInterval);
+                if (totalTime === 5) {
+                    alert("Vous n'êtes pas humain !");
+                    localStorage.clear();
+                    history.back();
                 } else {
-                    remainingTime = remainingTime-5;
-                    if(remainingTime === 0){
-                        clearInterval(timerInterval);
-                        window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
-                    }else{
-                        refreshCapChat(); // Rafraîchissement du CAPTCHA
-                    }
+                    totalTime -= 5;
+                    remainingTime = totalTime;
+                    localStorage.setItem('totalTime', totalTime);
+                    localStorage.setItem('remainingTime', remainingTime);
+                    refreshCapChat();
+                    startTimer();
                 }
             }
-    
-            // Appel à l'API pour obtenir les données du CAPTCHA en utilisant l'URL spécifiée
-            fetch(`/api/capchat/${urlUsage}`)
-            .then((response) => response.json())
-            .then((data) => {
-                const imageContainer = document.getElementById('image-container');
-                const question = document.getElementById('question');
-    
-                // Sélection aléatoire d'une image singulière à partir des données reçues
-                const imageSinguliere = data.imageSinguliere[Math.floor(Math.random() * data.imageSinguliere.length)];
-                question.innerText = imageSinguliere.Question; // Affichage de la question associée à l'image singulière
-    
-                let imagesNeutres = getRandomElements(data.imagesNeutres, 7); // Obtention de 7 images neutres aléatoires
-                let images = imagesNeutres.concat(imageSinguliere); // Concaténation de l'image singulière avec les images neutres
-    
-                // Mélange des images
-                for (let i = images.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [images[i], images[j]] = [images[j], images[i]];
+        }, 1000);
+    }
+
+    function setupTimer() {
+        clearInterval(timerInterval);
+        remainingTime = localStorage.getItem('remainingTime') ? parseInt(localStorage.getItem('remainingTime')) : totalTime;
+        document.getElementById('timer').innerText = remainingTime;
+        updateThermometer(remainingTime, totalTime);
+        startTimer();
+    }
+
+    // Fonction pour rafraîchir le CAPTCHA
+    function refreshCapChat() {
+        clearInterval(timerInterval); // Arrêt du minuteur
+        totalTime -= 5;
+        remainingTime = totalTime;
+        localStorage.setItem('totalTime', totalTime); // Mise à jour du temps total dans localStorage
+        localStorage.setItem('remainingTime', remainingTime); // Mise à jour du temps restant dans localStorage
+        location.reload(); // Rechargement de la page
+    }
+
+    // Fonction pour gérer le clic sur une image
+    function handleImageClick(index) {
+        const imageElements = document.getElementsByClassName('capchat-image');
+        const clickedImage = imageElements[index];
+
+        // Vérification si l'image cliquée est une image singulière
+        if (clickedImage.dataset.isSinguliere === 'true') {
+            clearInterval(timerInterval);
+            localStorage.clear(); // Nettoyer le localStorage
+            window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
+        } else {
+            remainingTime -= 5; // Réduction du temps restant
+            if (remainingTime <= 0) {
+                if (totalTime === 5) {
+                    alert("Vous n'êtes pas humain !");
+                    localStorage.clear();
+                    history.back(); // Retourner à la page précédente
+                } else {
+                    refreshCapChat(); // Rafraîchissement du CAPTCHA
                 }
-    
-                // Création des éléments d'image et ajout des événements de clic
-                images.forEach((image, index) => {
-                    const imgElement = document.createElement('img');
-                    imgElement.src = `/views/image/${image === imageSinguliere ? 'singuliers' : 'neutres'}/${image.FilePath}`;
-                    imgElement.classList.add('capchat-image');
-                    imgElement.dataset.isSinguliere = (image === imageSinguliere).toString();
-                    imgElement.addEventListener('click', () => handleImageClick(index));
-                    imageContainer.appendChild(imgElement);
-                });
-    
-                startTimer(); // Démarrage du minuteur
-            })
-            .catch((error) => {
-                console.error(error); // Affichage de toute erreur sur la console
+            } else {
+                refreshCapChat(); // Rafraîchissement du CAPTCHA
+            }
+        }
+    }
+
+    fetch(`/api/capchat/${urlUsage}`)
+        .then((response) => response.json())
+        .then((data) => {
+            const imageContainer = document.getElementById('image-container');
+            const question = document.getElementById('question');
+
+            const imageSinguliere = data.imageSinguliere[Math.floor(Math.random() * data.imageSinguliere.length)];
+            question.innerText = imageSinguliere.Question;
+
+            let imagesNeutres = getRandomElements(data.imagesNeutres, 7);
+            let images = imagesNeutres.concat(imageSinguliere);
+
+            for (let i = images.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [images[i], images[j]] = [images[j], images[i]];
+            }
+
+            images.forEach((image, index) => {
+                const imgElement = document.createElement('img');
+                imgElement.src = `/views/image/${image === imageSinguliere ? 'singuliers' : 'neutres'}/${image.FilePath}`;
+                imgElement.classList.add('capchat-image');
+                imgElement.dataset.isSinguliere = (image === imageSinguliere).toString();
+                imgElement.addEventListener('click', () => handleImageClick(index));
+                imageContainer.appendChild(imgElement);
             });
+
+            setupTimer();
+        })
+        .catch((error) => {
+            console.error(error);
         });
+});
+
     </script>
+        
 </body>
 </html>
