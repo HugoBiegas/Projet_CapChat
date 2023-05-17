@@ -92,19 +92,17 @@
           let totalTime = localStorage.getItem('totalTime') ? parseInt(localStorage.getItem('totalTime')) : 30;
           let remainingTime = localStorage.getItem('remainingTime') ? parseInt(localStorage.getItem('remainingTime')) : totalTime;
           let timerInterval;
-          let isPasse= false;
           
           function startTimer() {
             timerInterval = setInterval(() => {
               if (remainingTime <= 0) {
                 clearInterval(timerInterval);
                 if (totalTime === 5) {
-                    if(isPasse === false){
                     clearInterval(timerInterval); // Ajout de cette ligne pour arrêter le décompte du temps
                     alert("Vous n'êtes pas un humain !");
                     localStorage.clear();
                     history.back();
-                    }
+
                 } else {
                   remainingTime = totalTime;
                   localStorage.setItem('remainingTime', remainingTime);
@@ -152,7 +150,6 @@
               remainingTime -= 5; // Réduction du temps restant
               if (remainingTime <= 0) {
                 if (totalTime === 5) {
-                    isPasse= true;
                     clearInterval(timerInterval); // Ajout de cette ligne pour arrêter le décompte du temps
                     alert("Vous n'êtes pas un humain !");
                   localStorage.clear();
