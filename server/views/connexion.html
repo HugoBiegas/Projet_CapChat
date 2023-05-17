@@ -1,23 +1,51 @@
-<!-- connexion.html -->
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Connexion</title>
-  <link rel="stylesheet" type="text/css" href="style.css">
+    <title>Page de Connexion</title>
+    <script src="/capchat/general.js"></script> <!-- Assurez-vous que le chemin est correct -->
+    <style>
+        .login-container {
+            width: 300px;
+            padding: 16px;
+            background-color: #f1f1f1;
+            margin: 0 auto;
+            margin-top: 100px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .login-container input[type=text], .login-container input[type=password] {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .login-container button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-  <h1>Connexion</h1>
-  <form action="/connexion" method="POST">
-    <label for="username">Nom d'utilisateur:</label>
-    <input type="text" id="username" name="username" required><br>
+    <div class="login-container">
+        <label for="uname"><b>Nom d'utilisateur</b></label>
+        <input type="text" placeholder="Entrer le nom d'utilisateur" name="uname" required>
 
-    <label for="password">Mot de passe:</label>
-    <input type="password" id="password" name="password" required><br>
+        <label for="psw"><b>Mot de passe</b></label>
+        <input type="password" placeholder="Entrer le mot de passe" name="psw" required>
 
-    <input type="submit" value="Se connecter">
-  </form>
-  <a href="/inscription">
-    <button type="button">Inscription</button>
-  </a>
+        <div id="captcha"></div> <!-- Container pour le captcha -->
+        
+        <button type="submit" id="submit-btn" disabled>Se connecter</button>
+    </div>
+    <script>
+        // Ajoutez ici votre code pour activer le bouton une fois le captcha réussi.
+    </script>
 </body>
 </html>

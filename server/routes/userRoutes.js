@@ -77,4 +77,9 @@ router.post('/connexion', (req, res) => {
   // Code de gestion de la connexion
 });
 
+router.get('*', (req, res) => {
+    res.redirect('/');
+  });
+  
+
 module.exports = router;
