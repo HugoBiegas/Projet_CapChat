@@ -14,15 +14,15 @@ router.use('/views/image/singuliers', express.static(path.join(__dirname, '..', 
 
 
 router.get('/', (req, res) => {
-  res.sendFile('C:/Users/anime/OneDrive/Documents/GitHub/Projet_CapChat/server/views/index.html');
+  res.sendFile(path.join(__dirname, '..', 'views', 'index.html'));
 });
 
 router.get('/inscription', (req, res) => {
-    res.sendFile('C:/Users/anime/OneDrive/Documents/GitHub/Projet_CapChat/server/views/inscription.html');
+    res.sendFile(path.join(__dirname, '..', 'views', 'inscription.html'));
 });
   
   router.get('/connexion', (req, res) => {
-    res.sendFile('C:/Users/anime/OneDrive/Documents/GitHub/Projet_CapChat/server/views/connexion.html');
+    res.sendFile(path.join(__dirname, '..', 'views', 'connexion.html'));
 });
 
 router.get('/api/capchat/:urlUsage', (req, res) => {
