@@ -164,37 +164,33 @@
           }
       
           fetch(`/api/capchat/${urlUsage}`)
-            .then((response) => response.json())
-            .then((data) => {
-              const imageContainer = document.getElementById('image-container');
-              const question = document.getElementById('question');
-      
-              const imageSinguliere = data.imageSinguliere[Math.floor(Math.random() * data.imageSinguliere.length)];
-              question.innerText = imageSinguliere.Question;
-      
-              let imagesNeutres = getRandomElements(data.imagesNeutres, 7);
-              let images = imagesNeutres.concat(imageSinguliere);
-      
-              for (let i = images.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [images[i], images[j]] = [images[j], images[i]];
-              }
-      
-              images.forEach((image, index) => {
-                const imgElement = document.createElement('img');
-                imgElement.src = `/views/image/${image === imageSinguliere ? 'singuliers' : 'neutres'}/${image.FilePath}`;
-                imgElement.classList.add('capchat-image');
-                imgElement.dataset.isSinguliere = (image === imageSinguliere).toString();
-                imgElement.addEventListener('click', () => handleImageClick(index));
-                imageContainer.appendChild(imgElement);
-              });
-      
-              setupTimer();
-            })
-            .catch((error) => {
-              console.error(error);
-            });
+    .then((response) => response.json())
+    .then((data) => {
+        const imageContainer = document.getElementById('image-container');
+        const question = document.getElementById('question');
+
+        const imageSinguliere = data.imageSinguliere[0];  // Prend la première image singulière
+        question.innerText = imageSinguliere.Question;
+
+        let imagesNeutres = data.imagesNeutres;  // Prend toutes les images neutres
+        let images = imagesNeutres.concat(imageSinguliere);  // Concatène les images neutres et singulières
+
+        images.forEach((image, index) => {
+            const imgElement = document.createElement('img');
+            imgElement.src = `/views/image/${image === imageSinguliere ? 'singuliers' : 'neutres'}/${image.FilePath}`;
+            imgElement.classList.add('capchat-image');
+            imgElement.dataset.isSinguliere = (image === imageSinguliere).toString();
+            imgElement.addEventListener('click', () => handleImageClick(index));
+            imageContainer.appendChild(imgElement);
         });
+
+        setupTimer();
+    })
+    .catch((error) => {
+        console.error(error);
+    });
+});
+
       </script>
 </body>
 </html>
