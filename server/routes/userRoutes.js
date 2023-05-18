@@ -85,9 +85,14 @@ router.get('*/capchat/:urlUsage', (req, res) => {
   
 router.post('/inscription', async (req, res) => {
     try {
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
-        const username = req.body.username;
-        const NameArtiste = req.body.NameArtiste;
+        const { username, password, NameArtiste } = req.body;
+
+        // Vérification des champs
+        if (!username || !password) {
+            return res.json({ message: "Veuillez remplir tous les champs obligatoires." });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
         let query;
         let values;
 
@@ -102,17 +107,17 @@ router.post('/inscription', async (req, res) => {
         connection.query(query, values, function (error, results, fields) {
             if (error) {
                 console.error(error);
-                res.json({message: 'Erreur interne'});
+                return res.json({message: 'Erreur interne'});
             } else if (results.length > 0) {
                 let message = results[0].Username === username ? "Nom d'utilisateur déjà pris" : "Nom d'artiste déjà pris";
-                res.json({message: message});
+                return res.json({message: message});
             } else {
                 connection.query('INSERT INTO Users (Username, Password, NameArtiste) VALUES (?, ?, ?)', [username, hashedPassword, NameArtiste], function (error, results, fields) {
                     if (error) {
                         console.error(error);
-                        res.json({message: 'Erreur interne'});
+                        return res.json({message: 'Erreur interne'});
                     } else {
-                        res.json({message: 'Inscription réussie'});
+                        return res.json({message: 'Inscription réussie'});
                     }
                 });
             }
@@ -120,9 +125,10 @@ router.post('/inscription', async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.json({message: 'Erreur interne'});
+        return res.json({message: 'Erreur interne'});
     }
 });
+
 
 
 

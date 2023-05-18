@@ -29,20 +29,30 @@
         cursor: pointer;
         width: 100%;
     }
+    .hidden {
+    display: none;
+  }
   </style>
 </head>
 <body>
   <div class="login-container">
     <h1>Inscription</h1>
-    <form id="inscriptionForm" action="/inscription" method="POST">
+    <form id="inscriptionForm">
       <label for="NameArtiste"><b>Nom d'Artiste*</b></label>
       <input type="text" id="NameArtiste" placeholder="Entrer le nom d'Artiste" name="NameArtiste"><br>
 
       <label for="username"><b>Nom d'utilisateur</b></label>
-      <input type="text" id="username" placeholder="Entrer le nom d'utilisateur" name="username" required><br>
+      <input type="text" id="username" placeholder="Entrer le nom d'utilisateur" name="username" required minlength="3"><br>
 
       <label for="password"><b>Mot de passe</b></label>
-      <input type="password" placeholder="Entrer le mot de passe" id="password" name="password" required><br>
+      <input type="password" placeholder="Entrer le mot de passe" id="password" name="password" required pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$"><br>
+      <p id="password-criteria-header" class="hidden">Critaire pour le mot de passe :</p>
+      <ul id="password-criteria" class="hidden">
+        <li id="length">Au moins 8 caractères</li>
+        <li id="lowercase">Contient une lettre minuscule</li>
+        <li id="uppercase">Contient une lettre majuscule</li>
+        <li id="number">Contient un chiffre</li>
+      </ul>
 
       <button type="submit" id="submit-btn">S'inscrire</button>
     </form>
@@ -52,8 +62,50 @@
     <p style="color: red;">*n'est pas obligatoire</p>
   </div>
   <script>
+    const passwordInput = document.getElementById('password');
+    const lengthCriteria = document.getElementById('length');
+    const lowercaseCriteria = document.getElementById('lowercase');
+    const uppercaseCriteria = document.getElementById('uppercase');
+    const numberCriteria = document.getElementById('number');
+
+    passwordInput.addEventListener('input', function(e) {
+      const value = e.target.value;
+      const criteriaHeader = document.getElementById('password-criteria-header');
+      const criteriaList = document.getElementById('password-criteria');
+
+      if (value.length > 0) {
+        criteriaHeader.classList.remove('hidden');
+        criteriaList.classList.remove('hidden');
+      } else {
+        criteriaHeader.classList.add('hidden');
+        criteriaList.classList.add('hidden');
+      }
+        
+        if (value.length >= 8) {
+            lengthCriteria.style.color = 'green';
+        } else {
+            lengthCriteria.style.color = 'red';
+        }
+
+        if (/[a-z]/.test(value)) {
+            lowercaseCriteria.style.color = 'green';
+        } else {
+            lowercaseCriteria.style.color = 'red';
+        }
+
+        if (/[A-Z]/.test(value)) {
+            uppercaseCriteria.style.color = 'green';
+        } else {
+            uppercaseCriteria.style.color = 'red';
+        }
+
+        if (/\d/.test(value)) {
+            numberCriteria.style.color = 'green';
+        } else {
+            numberCriteria.style.color = 'red';
+        }
+    });
     document.getElementById('inscriptionForm').addEventListener('submit', function(event) {
-        // Empêche le comportement par défaut du formulaire (qui recharge la page)
         event.preventDefault();
     
         fetch('/inscription', {
@@ -69,14 +121,13 @@
         }).then(response => response.json())
         .then(data => {
           if (data.message === 'Inscription réussie') {
-            window.location.href = '/connexion'; // Redirige vers la page de connexion
+            window.location.href = '/connexion';
           } else {
-            alert(data.message); // Affiche un message d'alerte si l'inscription a échoué
+            alert(data.message);
           }
         })
+        .catch(error => console.error('Erreur:', error)); // Gestion des erreurs
     });
-    </script>
-    
-
+  </script>
 </body>
 </html>
