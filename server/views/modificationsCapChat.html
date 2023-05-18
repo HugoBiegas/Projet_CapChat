@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifications CapChat</title>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .image-thumbnail {
+            width: 80px;
+        }
+        
+        .navbar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        
+        /* Styles pour la fenêtre modale */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .modal input[type="text"],
+        .modal input[type="file"] {
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .modal button {
+            margin-top: 10px;
+        }
+        
+        /* Styles pour l'explorateur de fichiers */
+        .file-explorer {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .file-explorer input[type="file"] {
+            display: none;
+        }
+        
+        .file-explorer label {
+            display: inline-block;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+        
+        .file-explorer label:hover {
+            background-color: #e9e9e9;
+        }
+        
+        .file-explorer span {
+            margin-left: 10px;
+        }
+        .file-explorer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.file-explorer-container {
+    display: flex;
+    align-items: center;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+}
+
+.file-info label {
+    margin-left: 10px;
+}
+
+#imageName {
+    margin-left: 10px;
+}
+
+    </style>
+</head>
+<body>
+    <!-- menu.html -->
+    <div class="navbar">
+        <a href="/accueil">Acceuil</a>
+        <a href="/information">Informations CapChat</a>
+        <a href="/CreationCapChat">Créer CapChat</a>
+        <a href="/Profile">Profile</a>
+    </div>
+
+    <h1 id="capchatName"></h1>
+    <table id="imagesTable">
+        <tr>
+            <th>Image</th>
+            <th>Nom de l'image</th>
+            <th>Question</th>
+            <th>Actions</th>
+        </tr>
+    </table>
+
+    <!-- Fenêtre modale -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <h2>Modifier l'image</h2>
+            <div class="file-explorer">
+                <div class="file-explorer-container">
+                    <img id="selectedThumbnail" src="" alt="Vignette de l'image sélectionnée" style="display: none; width: 80px; height: auto; margin-right: 10px;">
+                    <div class="file-info">
+                        <input type="file" id="imageFileInput" accept=".png,.jpg">
+                        <label for="imageFileInput"><span>Sélectionner une image</span></label>
+                    </div>
+                </div>
+                <div id="imageName" style="display: none;"></div>
+            </div>
+            
+            <input type="text" id="imageNameInput" placeholder="Nom de l'image">
+            <input type="text" id="questionInput" placeholder="Question">
+            <button id="validateButton">Valider</button>
+            <button id="cancelButton">Annuler</button>
+        </div>
+    </div>
+
+<!-- JavaScript pour modificationsCapChat.html -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const urlUsage = window.location.pathname.split("/").pop();
+      const capchatNameElement = document.querySelector("#capchatName");
+      capchatNameElement.textContent = urlUsage;
+  
+      fetch(`/api/capchatall/${urlUsage}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          const imagesTable = document.querySelector("#imagesTable");
+          data.imagesNeutres.forEach(image => {
+            const row = createTableRow(image.FilePath, image.Question);
+            imagesTable.appendChild(row);
+          });
+          data.imageSinguliere.forEach(image => {
+            const row = createTableRow(image.FilePath, image.Question);
+            imagesTable.appendChild(row);
+          });
+        })
+        .catch(error => {
+          console.error('Erreur:', error);
+        });
+    });
+    imageFileInput.addEventListener("change", function(event) {
+    const imageFile = event.target.files[0];
+    if (imageFile && isValidImageFile(imageFile)) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const selectedThumbnail = document.getElementById("selectedThumbnail");
+            selectedThumbnail.src = e.target.result;
+            selectedThumbnail.style.display = "inline";
+        };
+        reader.readAsDataURL(imageFile);
+    }
+});
+
+    function createTableRow(imagePath, question) {
+      const row = document.createElement("tr");
+  
+      const imageCell = document.createElement("td");
+      const imageThumbnail = document.createElement("img");
+      imageThumbnail.src = `/views/image/${question ? 'singuliers' : 'neutres'}/${imagePath}`;
+      imageThumbnail.alt = imagePath;
+      imageThumbnail.classList.add("image-thumbnail");
+      imageCell.appendChild(imageThumbnail);
+      row.appendChild(imageCell);
+  
+      const imageNameCell = document.createElement("td");
+      imageNameCell.textContent = imagePath;
+      row.appendChild(imageNameCell);
+  
+      const questionCell = document.createElement("td");
+      questionCell.textContent = question || "";
+      row.appendChild(questionCell);
+  
+      const actionsCell = document.createElement("td");
+      const modifyButton = document.createElement("button");
+      modifyButton.textContent = "Modifier";
+      modifyButton.addEventListener("click", () => {
+        openModal(imagePath, question);
+      });
+      actionsCell.appendChild(modifyButton);
+      row.appendChild(actionsCell);
+  
+      return row;
+    }
+  
+    function openModal(imagePath, question) {
+      const modal = document.getElementById("myModal");
+      const imageFileInput = document.getElementById("imageFileInput");
+      const imageNameInput = document.getElementById("imageNameInput");
+      const questionInput = document.getElementById("questionInput");
+      const validateButton = document.getElementById("validateButton");
+      const cancelButton = document.getElementById("cancelButton");
+  
+      // Remplir les champs avec les valeurs actuelles de l'image
+      imageNameInput.value = imagePath;
+      questionInput.value = question || "";
+  
+      // Afficher la fenêtre modale
+      modal.style.display = "block";
+      imageFileInput.addEventListener("change", function(event) {
+    const imageFile = event.target.files[0];
+    if (imageFile && isValidImageFile(imageFile)) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const selectedThumbnail = document.getElementById("selectedThumbnail");
+            selectedThumbnail.src = e.target.result;
+            selectedThumbnail.style.display = "inline";
+        };
+        reader.readAsDataURL(imageFile);
+    }
+    });
+
+
+      // Gérer les actions des boutons de la fenêtre modale
+      validateButton.addEventListener("click", () => {
+        const newImagePath = imageNameInput.value;
+        const newQuestion = questionInput.value;
+  
+        // Vérifier si une image a été sélectionnée
+        if (imageFileInput.files.length === 0 && !newImagePath) {
+          alert("Veuillez sélectionner une image ou saisir un nouveau nom d'image.");
+          return;
+        }
+  
+        // Récupérer le fichier d'image s'il a été sélectionné
+        const imageFile = imageFileInput.files[0];
+  
+        // Vérifier le type de fichier (seulement .png et .jpg autorisés)
+        if (imageFile && !isValidImageFile(imageFile)) {
+          alert("Veuillez sélectionner un fichier d'image au format .png ou .jpg.");
+          return;
+        }
+  
+        // Effectuer les opérations de modification de l'image
+        updateImage(imagePath, newImagePath, newQuestion, imageFile);
+  
+        // Fermer la fenêtre modale
+        modal.style.display = "none";
+      });
+  
+      cancelButton.addEventListener("click", () => {
+        // Fermer la fenêtre modale
+        modal.style.display = "none";
+      });
+    }
+  
+    function isValidImageFile(file) {
+      const allowedTypes = ["image/png", "image/jpeg"];
+      return allowedTypes.includes(file.type);
+    }
+  
+    function updateImage(imagePath, newImagePath, newQuestion, imageFile) {
+      const formData = new FormData();
+      formData.append("newImagePath", newImagePath);
+      formData.append("newQuestion", newQuestion);
+      if (imageFile) {
+        formData.append("imageFile", imageFile);
+      }
+  
+      axios.post(`/api/updateimage/${imagePath}`, formData)
+        .then(response => {
+          if (response.status !== 200) {
+            throw new Error('Server response was not ok');
+          }
+          console.log(response.data.message);
+          // Mettre à jour l'affichage si nécessaire
+          // ...
+        })
+        .catch(error => {
+          console.error('Erreur:', error);
+        });
+    }
+
+
+  </script>
+  </body>
+</html>

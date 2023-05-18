@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Accueil Artiste</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        #capchatsTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #capchatsTable th, #capchatsTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        #capchatsTable tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="/acceuil">Accueil</a>
+        <a href="/information">Informations CapChat</a>
+        <a href="/CreationCapChat">Créer CapChat</a>
+        <a href="/Profile">Profile</a>
+    </div>
+    <h1>Bonjour <span id="username"></span></h1>
+    <h2>Nom d'Artiste : <span id="artistName"></span></h2>
+    <table id="capchatsTable">
+        <thead>
+            <tr>
+                <th>Nom CapChat</th>
+                <th>Nombre d'Images</th>
+                <th>URL Utilisable</th>
+                <th>Tester</th>
+                <th>Modification</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Les lignes du tableau seront générées dynamiquement par JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        // JavaScript pour acceuilArtiste.html
+
+        // Utilisation de la bibliothèque Fetch pour interagir avec l'API
+
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch('/api/user')
+                .then(response => response.json())
+                .then(data => {
+                    const usernameElement = document.querySelector("#username");
+                    usernameElement.textContent = data.username;
+
+                    const artistNameElement = document.querySelector("#artistName");
+                    artistNameElement.textContent = data.artistName;
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                });
+
+            fetch('/api/capchats')
+                .then(response => response.json())
+                .then(data => {
+                    const capchatsTable = document.querySelector("#capchatsTable");
+                    console.log(data);
+                    // Créer une nouvelle ligne pour chaque CapChat
+                    data.forEach(capchat => {
+                        const row = document.createElement("tr");
+
+                        const capchatNameCell = document.createElement("td");
+                        capchatNameCell.textContent = capchat.URLUsage;
+                        row.appendChild(capchatNameCell);
+
+                        const imagesCountCell = document.createElement("td");
+                        imagesCountCell.textContent = capchat.nombreImage;
+                        row.appendChild(imagesCountCell);
+
+                        const capchatUrlCell = document.createElement("td");
+                        capchatUrlCell.textContent = `/capchat/${capchat.URLUsage}`;
+                        row.appendChild(capchatUrlCell);
+
+                        const testerCell = document.createElement("td");
+                        const testerButton = document.createElement("button");
+                        testerButton.textContent = "Tester";
+                        testerButton.onclick = function() {
+                            window.location.href = window.location.href + `/capchat/${capchat.URLUsage}`;
+                        }
+                        testerCell.appendChild(testerButton);
+                        row.appendChild(testerCell);
+
+                        const modificationCell = document.createElement("td");
+                        const modificationButton = document.createElement("button");
+                        modificationButton.textContent = "Modifier";
+                        modificationButton.onclick = function() {
+                            window.location.href = window.location.href + `/modification/${capchat.URLUsage}`;
+                        }
+                        modificationCell.appendChild(modificationButton);
+                        row.appendChild(modificationCell);
+
+                        capchatsTable.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                });
+        });
+    </script>
+</body>
+</html>
