@@ -112,9 +112,10 @@ document.querySelector('form').addEventListener('submit', (event) => {
     localStorage.clear();
     localStorage.removeItem('storedUsername'); // Supprimer la valeur du champ "Nom d'utilisateur" du localStorage
     localStorage.removeItem('storedPassword'); // Supprimer la valeur du champ "Mot de passe" du localStorage
-
     if(!submitBtn.disabled)
         event.target.submit(); // Soumettre le formulaire si le CapChat est réalisé correctement
+    usernameInput.value = '';
+    passwordInput.value = ''; 
 });
 
 // Vérifier le CapChat lors du chargement de la page

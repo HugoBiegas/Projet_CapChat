@@ -7,10 +7,9 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-require('dotenv').config();
 
 const router = express.Router();
-const jwtSecret = process.env.JWT_SECRET;
+const jwtSecret = 'Be6a3AxqecEym!J6?h5KXnFC7TS$zsyexEGY7EcQ';
 
 router.use(cors());
 
@@ -41,12 +40,12 @@ router.get('/api/capchat/:urlUsage', (req, res) => {
             return res.status(404).send('CapChat non trouvé');
         }
         const capchat = results[0];
-        connection.query(`SELECT FilePath FROM Images WHERE ImageSetID = ? AND IsSingular = FALSE ORDER BY RAND() LIMIT 7`, [capchat.ID], function (error, results, fields) {
+        connection.query(`SELECT FilePath FROM Images WHERE ImageSetID = ? AND Question IS NULL ORDER BY RAND() LIMIT 7`, [capchat.ID], function (error, results, fields) {
             if (error) {
                 return res.status(500).send(error);
             }
             const imagesNeutres = results;
-            connection.query(`SELECT FilePath,Question FROM Images WHERE ImageSetID = ? AND IsSingular = TRUE ORDER BY RAND() LIMIT 1`, [capchat.ID], function (error, results, fields) {
+            connection.query(`SELECT FilePath, Question FROM Images WHERE ImageSetID = ? AND Question IS NOT NULL ORDER BY RAND() LIMIT 1`, [capchat.ID], function (error, results, fields) {
                 if (error) {
                     return res.status(500).send(error);
                 }
@@ -178,22 +177,22 @@ function generateAccessToken(userId) {
   router.post('/connexion', async (req, res) => {
     try {
       const { username, password } = req.body;
-  
-      connection.query('SELECT Password FROM Users WHERE Username = ?', [username], async (error, results, fields) => {
+
+      connection.query('SELECT id,Password FROM users WHERE Username = ?', [username], async (error, results, fields) => {
         if (error) {
           console.error(error);
-          return res.status(500).json({ message: 'Erreur interne' });
+          return res.status(500).json({ message: 'Erreur connextion a la BD' });
         }
-  
+
         if (results.length === 0) {
-          return res.status(401).json({ message: 'Authentification invalide' });
+          return res.status(401).json({ message: 'Nom d utilisateur invalide ${results}'  });
         }
   
         const user = results[0];
         const passwordMatch = await bcrypt.compare(password, user.Password);
   
         if (!passwordMatch) {
-          return res.status(401).json({ message: 'Authentification invalide' });
+          return res.status(401).json({ message: 'mot de passe invalide' });
         }
   
         const token = generateAccessToken(user.ID); // Appel à generateAccessToken
@@ -201,7 +200,7 @@ function generateAccessToken(userId) {
         connection.query('INSERT INTO Token (UserID, TokenValue, Expired) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))', [user.ID, token], (error, results, fields) => {
           if (error) {
             console.error(error);
-            return res.status(500).json({ message: 'Erreur interne' });
+            return res.status(500).json({ message: 'Erreur connextion a la BD' });
           }
   
           res.json({ token });
@@ -209,10 +208,10 @@ function generateAccessToken(userId) {
       });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: 'Erreur interne' });
+      res.status(500).json({ message: 'Erreur connextion a la BD' });
     }
   });
-    
+
   router.get('/accueil', authenticateToken, (req, res) => {
     res.send('Bienvenue sur la page d\'accueil des artistes');
   });

@@ -46,7 +46,6 @@ con.connect(function(err) {
             ID INT AUTO_INCREMENT,
             UserID INT,
             ThemeID INT,
-            Name VARCHAR(255) NOT NULL,
             URLUsage VARCHAR(255),
             PRIMARY KEY (ID),
             FOREIGN KEY (UserID) REFERENCES Users(ID),
@@ -55,7 +54,6 @@ con.connect(function(err) {
           `CREATE TABLE Images (
             ID INT AUTO_INCREMENT,
             ImageSetID INT,
-            IsSingular BOOLEAN NOT NULL,
             FilePath VARCHAR(255) NOT NULL,
             Question VARCHAR(255) DEFAULT NULL,
             PRIMARY KEY (ID),

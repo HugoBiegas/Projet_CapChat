@@ -166,6 +166,12 @@
         let imagesNeutres = data.imagesNeutres;  // Prend toutes les images neutres
         let images = imagesNeutres.concat(imageSinguliere);  // Concatène les images neutres et singulières
 
+        //module aléatoire 
+        for (let i = images.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [images[i], images[j]] = [images[j], images[i]];
+        }
+
         images.forEach((image, index) => {
             const imgElement = document.createElement('img');
             imgElement.src = `/views/image/${image === imageSinguliere ? 'singuliers' : 'neutres'}/${image.FilePath}`;

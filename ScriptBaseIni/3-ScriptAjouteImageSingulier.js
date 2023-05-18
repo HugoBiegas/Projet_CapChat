@@ -36,7 +36,7 @@ function insertImageAsync(imagePath, question) {
       if (err) reject(err);
       else {
         const imageBase64 = data.toString('base64');
-        const sql = `INSERT INTO Images (ImageSetID, IsSingular, FilePath, Question) VALUES (1, true, ?, ?)`;
+        const sql = `INSERT INTO Images (ImageSetID, FilePath, Question) VALUES (1, ?, ?)`;
         connection.query(sql, [path.basename(imagePath), question], (err, result) => {
           if (err) reject(err);
           else resolve(result);

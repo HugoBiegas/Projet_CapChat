@@ -19,7 +19,7 @@ con.connect(function(err) {
   const password = 'root';
   const artistName = 'Hugo';
   const themeName = 'Général';
-  const setName = 'Général';
+  const setName = 'general';
   const folderPath = path.join(__dirname, '..','server', 'views', 'image', 'neutres');
 
   bcrypt.hash(password, 10, function(err, hash) {
@@ -43,7 +43,7 @@ con.connect(function(err) {
             if (err) throw err;
 
             const themeID = result[0].ID;
-            con.query("INSERT INTO ImageSets (UserID, ThemeID, Name,URLUsage) VALUES (?, ?, ?, ?)", [userID, themeID, setName,'general'], async function(err, result) {
+            con.query("INSERT INTO ImageSets (UserID, ThemeID,URLUsage) VALUES (?, ?, ?)", [userID, themeID,setName], async function(err, result) {
               if (err) throw err;
               console.log("ImageSet inserted");
 
@@ -61,7 +61,7 @@ con.connect(function(err) {
                   const filePath = path.join(folderPath, file);
                   const data = await fs.readFile(filePath, 'utf8');
                   await new Promise((resolve, reject) => {
-                    con.query("INSERT INTO Images (ImageSetID, IsSingular, FilePath, Question) SELECT ImageSets.ID, false, ?, NULL FROM ImageSets WHERE ImageSets.Name = ?", [path.basename(filePath), setName], function(err, result) {
+                    con.query("INSERT INTO Images (ImageSetID, FilePath, Question) SELECT ImageSets.ID, ?, NULL FROM ImageSets WHERE ImageSets.URLUsage = ?", [path.basename(filePath), setName], function(err, result) {
                       if (err) {
                         reject(err);
                         return;
