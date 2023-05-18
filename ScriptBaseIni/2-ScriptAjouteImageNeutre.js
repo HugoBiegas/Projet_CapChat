@@ -20,7 +20,7 @@ con.connect(function(err) {
   const artistName = 'Hugo';
   const themeName = 'Général';
   const setName = 'Général';
-  const folderPath = 'C:\\Users\\anime\\OneDrive\\Documents\\GitHub\\Projet_CapChat\\server\\views\\image\\neutres';
+  const folderPath = path.join(__dirname, '..','server', 'views', 'image', 'neutres');
 
   bcrypt.hash(password, 10, function(err, hash) {
     if (err) throw err;
