@@ -6,10 +6,16 @@ const fs = require('fs');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const util = require('util');
+var cookieParser = require('cookie-parser');
+
+
+const query = util.promisify(connection.query).bind(connection);
 
 
 const router = express.Router();
 const jwtSecret = 'Be6a3AxqecEym!J6?h5KXnFC7TS$zsyexEGY7EcQ';
+router.use(cookieParser());
 
 router.use(cors());
 
@@ -72,7 +78,7 @@ router.get('/api/urlusage', (req, res) => {
 
 router.get('*/capchat/:urlUsage', (req, res) => {
     const urlUsage = req.params.urlUsage;
-    connection.query(`SELECT * FROM ImageSets WHERE URLUsage = ?`, [urlUsage], function (error, results, fields) {
+    connection.query(`SELECT id FROM ImageSets WHERE URLUsage = ?`, [urlUsage], function (error, results, fields) {
         if (error) {
             return res.status(500).send(error);
         }
@@ -142,8 +148,8 @@ function generateAccessToken(userId) {
   }
   
   function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    // Récupérer le token du cookie
+    const token = req.cookies['authToken'];
   
     if (!token) {
       return res.status(401).json({ message: 'Jetons d\'authentification manquants' });
@@ -159,58 +165,74 @@ function generateAccessToken(userId) {
       req.user = decoded;
   
       // Vérifier que le token existe et n'est pas expiré dans la base de données
-      connection.query('SELECT id FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
+      connection.query('SELECT ID FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
         if (error) {
           console.error(error);
           return res.status(500).json({ message: 'Erreur interne' });
         }
   
         if (results.length === 0) {
-          return res.status(401).json({ message: 'Authentification invalide' });
+          connection.query('SELECT ID FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired < NOW()', [decoded.id, token], (error, results, fields) => {
+            if (error) {
+              console.error(error);
+              return res.status(500).json({ message: 'Erreur interne' });
+            }
+      
+            if (results.length >0) {
+              connection.query('DELETE FROM Token WHERE UserID = ? AND TokenValue = ?', [decoded.id, token], (error, results, fields) => {
+                if (error) {
+                  console.error(error);
+                  return res.status(500).json({ message: 'Erreur interne' });
+                }
+              });
+            }
+          });
+          // Supprimer le cookie du navigateur
+          res.clearCookie('authToken');
+          return res.status(401).json({ message: 'Authentification invalide. Veuillez vous reconnecter.' });
         }
-  
         next();
       });
     });
   }
   
+  
   router.post('/connexion', async (req, res) => {
     try {
       const { username, password } = req.body;
-
-      connection.query('SELECT id,Password FROM users WHERE Username = ?', [username], async (error, results, fields) => {
-        if (error) {
-          console.error(error);
-          return res.status(500).json({ message: 'Erreur connextion a la BD' });
-        }
-
-        if (results.length === 0) {
-          return res.status(401).json({ message: 'Nom d utilisateur invalide ${results}'  });
-        }
   
-        const user = results[0];
-        const passwordMatch = await bcrypt.compare(password, user.Password);
+      const users = await query('SELECT ID,Password FROM users WHERE Username = ?', [username]);
+      if (users.length === 0) {
+        return res.status(401).json({ message: 'Nom d utilisateur invalide'  });
+      }
   
-        if (!passwordMatch) {
-          return res.status(401).json({ message: 'mot de passe invalide' });
-        }
+      const user = users[0];
+      const passwordMatch = await bcrypt.compare(password, user.Password);
   
-        const token = generateAccessToken(user.ID); // Appel à generateAccessToken
+      if (!passwordMatch) {
+        return res.status(401).json({ message: 'mot de passe invalide' });
+      }
   
-        connection.query('INSERT INTO Token (UserID, TokenValue, Expired) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))', [user.ID, token], (error, results, fields) => {
-          if (error) {
-            console.error(error);
-            return res.status(500).json({ message: 'Erreur connextion a la BD' });
-          }
+      const tokens = await query('SELECT ID FROM Token WHERE UserID = ?', [user.ID]);
+      if(tokens.length > 0){
+        await query('DELETE FROM Token WHERE UserID = ?', [user.ID]);
+      }
   
-          res.json({ token });
-        });
-      });
+      const token = generateAccessToken(user.ID); // Appel à generateAccessToken
+  
+      await query('INSERT INTO Token (UserID, TokenValue, Expired) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))', [user.ID, token]);
+  
+      // Stocker le token dans un cookie
+      res.cookie('authToken', token, { httpOnly: true, secure: true, maxAge: 24 * 60 * 60 * 1000 }); // 1 jour
+  
+      // Rediriger vers l'accueil
+      res.redirect('/accueil');
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Erreur connextion a la BD' });
     }
   });
+  
 
   router.get('/accueil', authenticateToken, (req, res) => {
     res.send('Bienvenue sur la page d\'accueil des artistes');
