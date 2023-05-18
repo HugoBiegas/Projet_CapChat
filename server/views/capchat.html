@@ -181,11 +181,17 @@
         console.error(error);
     });
 });
+const storedUsername = localStorage.getItem('storedUsername');
+const storedPassword = localStorage.getItem('storedPassword');
+
 // Fonction pour gérer la réussite du CapChat
 function handleCapChatSuccess(timerInterval,urlUsage) {
   clearInterval(timerInterval);
   localStorage.clear(); // Nettoyer le localStorage
   localStorage.setItem('capchatSuccess', 'true'); // Stocker la réussite du CapChat dans localStorage
+  localStorage.setItem('storedUsername', storedUsername); // Stocker la réussite du CapChat dans localStorage
+  localStorage.setItem('storedPassword', storedPassword); // Stocker la réussite du CapChat dans localStorage
+
   window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
 }
 
@@ -194,6 +200,8 @@ function handleCapChatFailure(timerInterval) {
   clearInterval(timerInterval); // Ajout de cette ligne pour arrêter le décompte du temps
   alert("Vous n'êtes pas un humain !");
   localStorage.clear();
+  localStorage.setItem('storedUsername', storedUsername); // Stocker la réussite du CapChat dans localStorage
+  localStorage.setItem('storedPassword', storedPassword); // Stocker la réussite du CapChat dans localStorage
   localStorage.setItem('capchatSuccess', 'false'); // Stocker l'échec du CapChat dans localStorage
   history.back(); // Retourner à la page précédente
 }

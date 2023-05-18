@@ -59,9 +59,26 @@
 const capchatBtn = document.getElementById('capchat-btn');
 // Récupérer le bouton de connexion
 const submitBtn = document.getElementById('submit-btn');
+// Récupérer les champs de saisie
+const usernameInput = document.querySelector('input[name="username"]');
+const passwordInput = document.querySelector('input[name="password"]');
 
+// Vérifier si les valeurs des champs existent dans le localStorage
+const storedUsername = localStorage.getItem('storedUsername');
+const storedPassword = localStorage.getItem('storedPassword');
+if (storedUsername) {
+  usernameInput.value = storedUsername; // Restaurer la valeur du champ "Nom d'utilisateur"
+}
+if (storedPassword) {
+  passwordInput.value = storedPassword; // Restaurer la valeur du champ "Mot de passe"
+}
 // Ajouter un événement au clic sur le bouton du CapChat
 capchatBtn.addEventListener('click', () => {
+
+    // Stocker les valeurs saisies dans le localStorage
+    localStorage.setItem('storedUsername', usernameInput.value);
+    localStorage.setItem('storedPassword', passwordInput.value);
+
     // Rediriger vers /capchat/general en ajoutant cette partie à l'URL actuelle
     window.location.href += '/capchat/general';
 });
@@ -93,6 +110,9 @@ document.querySelector('form').addEventListener('submit', (event) => {
     submitBtnConnexion = true;
     checkCapChat(true);
     localStorage.clear();
+    localStorage.removeItem('storedUsername'); // Supprimer la valeur du champ "Nom d'utilisateur" du localStorage
+    localStorage.removeItem('storedPassword'); // Supprimer la valeur du champ "Mot de passe" du localStorage
+
     if(!submitBtn.disabled)
         event.target.submit(); // Soumettre le formulaire si le CapChat est réalisé correctement
 });
