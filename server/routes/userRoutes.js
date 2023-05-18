@@ -5,13 +5,18 @@ const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+require('dotenv').config();
 
 const router = express.Router();
+const jwtSecret = process.env.JWT_SECRET;
 
 router.use(cors());
 
 router.use('/views/image/neutres', express.static(path.join(__dirname, '..', 'views', 'image', 'neutres')));
 router.use('/views/image/singuliers', express.static(path.join(__dirname, '..', 'views', 'image', 'singuliers')));
+
 
 
 router.get('/', (req, res) => {
@@ -97,10 +102,10 @@ router.post('/inscription', async (req, res) => {
         let values;
 
         if (NameArtiste) {
-            query = 'SELECT * FROM Users WHERE Username = ? OR NameArtiste = ?';
+            query = 'SELECT Username FROM Users WHERE Username = ? OR NameArtiste = ?';
             values = [username, NameArtiste];
         } else {
-            query = 'SELECT * FROM Users WHERE Username = ?';
+            query = 'SELECT Username FROM Users WHERE Username = ?';
             values = [username];
         }
 
@@ -133,30 +138,84 @@ router.post('/inscription', async (req, res) => {
 
 
 
-router.post('/connexion', (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
-
-    connection.query('SELECT Password FROM Users WHERE Username = ?', [username], async function (error, results, fields) {
+function generateAccessToken(userId) {
+    return jwt.sign({ id: userId }, jwtSecret, { expiresIn: '1d' });
+  }
+  
+  function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+  
+    if (!token) {
+      return res.status(401).json({ message: 'Jetons d\'authentification manquants' });
+    }
+  
+    jwt.verify(token, jwtSecret, (error, decoded) => {
+      if (error) {
+        console.error(error);
+        return res.status(403).json({ message: 'Échec de l\'authentification du jeton' });
+      }
+  
+      req.token = token;
+      req.user = decoded;
+  
+      // Vérifier que le token existe et n'est pas expiré dans la base de données
+      connection.query('SELECT id FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
         if (error) {
-            console.error(error);
-            res.redirect('/connexion');
-        } else {
-            if (results.length > 0) {
-                const comparison = await bcrypt.compare(password, results[0].Password)
-                if (comparison) {
-                    // l'utilisateur est connecté avec succès
-                    res.redirect('/welcome'); // ou toute autre route
-                } else {
-                    res.redirect('/connexion');
-                }
-            } else {
-                res.redirect('/connexion');
-            }
+          console.error(error);
+          return res.status(500).json({ message: 'Erreur interne' });
         }
+  
+        if (results.length === 0) {
+          return res.status(401).json({ message: 'Authentification invalide' });
+        }
+  
+        next();
+      });
     });
-});
-
+  }
+  
+  router.post('/connexion', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+  
+      connection.query('SELECT Password FROM Users WHERE Username = ?', [username], async (error, results, fields) => {
+        if (error) {
+          console.error(error);
+          return res.status(500).json({ message: 'Erreur interne' });
+        }
+  
+        if (results.length === 0) {
+          return res.status(401).json({ message: 'Authentification invalide' });
+        }
+  
+        const user = results[0];
+        const passwordMatch = await bcrypt.compare(password, user.Password);
+  
+        if (!passwordMatch) {
+          return res.status(401).json({ message: 'Authentification invalide' });
+        }
+  
+        const token = generateAccessToken(user.ID); // Appel à generateAccessToken
+  
+        connection.query('INSERT INTO Token (UserID, TokenValue, Expired) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))', [user.ID, token], (error, results, fields) => {
+          if (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Erreur interne' });
+          }
+  
+          res.json({ token });
+        });
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Erreur interne' });
+    }
+  });
+    
+  router.get('/accueil', authenticateToken, (req, res) => {
+    res.send('Bienvenue sur la page d\'accueil des artistes');
+  });
 
 router.get('*', (req, res) => {
     res.redirect('/');

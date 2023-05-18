@@ -98,11 +98,7 @@
               if (remainingTime <= 0) {
                 clearInterval(timerInterval);
                 if (totalTime === 5) {
-                    clearInterval(timerInterval); // Ajout de cette ligne pour arrêter le décompte du temps
-                    alert("Vous n'êtes pas un humain !");
-                    localStorage.clear();
-                    history.back();
-
+                    handleCapChatFailure(timerInterval);
                 } else {
                   remainingTime = totalTime;
                   localStorage.setItem('remainingTime', remainingTime);
@@ -143,17 +139,12 @@
       
             // Vérification si l'image cliquée est une image singulière
             if (clickedImage.dataset.isSinguliere === 'true') {
-              clearInterval(timerInterval);
-              localStorage.clear(); // Nettoyer le localStorage
-              window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
+              handleCapChatSuccess(timerInterval,urlUsage);
             } else {
               remainingTime -= 5; // Réduction du temps restant
               if (remainingTime <= 0) {
                 if (totalTime === 5) {
-                    clearInterval(timerInterval); // Ajout de cette ligne pour arrêter le décompte du temps
-                    alert("Vous n'êtes pas un humain !");
-                  localStorage.clear();
-                  history.back(); // Retourner à la page précédente
+                  handleCapChatFailure(timerInterval);
                 } else {
                   refreshCapChat(); // Rafraîchissement du CAPTCHA
                 }
@@ -190,7 +181,22 @@
         console.error(error);
     });
 });
+// Fonction pour gérer la réussite du CapChat
+function handleCapChatSuccess(timerInterval,urlUsage) {
+  clearInterval(timerInterval);
+  localStorage.clear(); // Nettoyer le localStorage
+  localStorage.setItem('capchatSuccess', 'true'); // Stocker la réussite du CapChat dans localStorage
+  window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
+}
 
+// Fonction pour gérer l'échec du CapChat
+function handleCapChatFailure(timerInterval) {
+  clearInterval(timerInterval); // Ajout de cette ligne pour arrêter le décompte du temps
+  alert("Vous n'êtes pas un humain !");
+  localStorage.clear();
+  localStorage.setItem('capchatSuccess', 'false'); // Stocker l'échec du CapChat dans localStorage
+  history.back(); // Retourner à la page précédente
+}
       </script>
 </body>
 </html>

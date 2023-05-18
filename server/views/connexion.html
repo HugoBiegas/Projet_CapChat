@@ -22,7 +22,7 @@
             box-sizing: border-box;
         }
         .login-container #submit-btn {
-            background-color: #4CAF50;
+            background-color: #ff0000; /* Rouge par défaut */
             color: white;
             padding: 14px 20px;
             margin: 8px 0;
@@ -30,26 +30,77 @@
             cursor: pointer;
             width: 100%;
         }
+        .login-container .success {
+            background-color: #00ff00 !important; /* Vert en cas de succès */
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h1>Connexion</h1>
-        <label for="uname"><b>Nom d'utilisateur</b></label>
-        <input type="text" placeholder="Entrer le nom d'utilisateur" name="uname" required>
+        <form action="/connexion" method="POST">
+            <label for="uname"><b>Nom d'utilisateur</b></label>
+            <input type="text" placeholder="Entrer le nom d'utilisateur" name="username" required>
 
-        <label for="psw"><b>Mot de passe</b></label>
-        <input type="password" placeholder="Entrer le mot de passe" name="psw" required>
+            <label for="psw"><b>Mot de passe</b></label>
+            <input type="password" placeholder="Entrer le mot de passe" name="password" required>
 
-        <div id="captcha"></div> <!-- Container pour le captcha -->
-        
-        <button type="submit" id="submit-btn" disabled>Se connecter</button>
+            <button type="button" id="capchat-btn">CapChat</button> <!-- Bouton pour lancer le CapChat -->
+            <button type="submit" id="submit-btn" disabled>Se connecter</button> <!-- Bouton de connexion désactivé par défaut -->
+        </form>
         <a href="/inscription">
             <button>s'inscrire</button>
         </a>
     </div>
+
     <script>
-        // Ajoutez ici votre code pour activer le bouton une fois le captcha réussi.
+// Récupérer le bouton du CapChat
+const capchatBtn = document.getElementById('capchat-btn');
+// Récupérer le bouton de connexion
+const submitBtn = document.getElementById('submit-btn');
+
+// Ajouter un événement au clic sur le bouton du CapChat
+capchatBtn.addEventListener('click', () => {
+    // Rediriger vers /capchat/general en ajoutant cette partie à l'URL actuelle
+    window.location.href += '/capchat/general';
+});
+
+// Fonction pour activer le bouton de connexion
+function enableSubmitBtn() {
+    submitBtn.disabled = false;
+    submitBtn.classList.add('success'); // Ajouter la classe 'success' pour le style vert
+}
+
+// Vérifier si le CapChat a été réalisé
+function checkCapChat(submitBtnConnexion) {
+    const capchatSuccess = localStorage.getItem('capchatSuccess');
+    console.log(capchatSuccess);
+    if (capchatSuccess === 'true') {
+        console.log("je passe par la ");
+        enableSubmitBtn();
+    } else {
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('success'); // Retirer la classe 'success' pour le style vert
+        if(submitBtnConnexion === true)
+            alert("Veuillez compléter le CapChat pour vous connecter.");
+    }
+}
+
+// Appeler la vérification du CapChat lors de la soumission du formulaire
+document.querySelector('form').addEventListener('submit', (event) => {
+    event.preventDefault(); // Empêcher la soumission du formulaire par défaut
+    submitBtnConnexion = true;
+    checkCapChat(true);
+    localStorage.clear();
+    if(!submitBtn.disabled)
+        event.target.submit(); // Soumettre le formulaire si le CapChat est réalisé correctement
+});
+
+// Vérifier le CapChat lors du chargement de la page
+document.addEventListener('DOMContentLoaded', () => {
+    checkCapChat(false);
+});
     </script>
 </body>
 </html>
