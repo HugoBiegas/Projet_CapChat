@@ -21,7 +21,7 @@
             border: 1px solid #ccc;
             box-sizing: border-box;
         }
-        .login-container button {
+        .login-container #submit-btn {
             background-color: #4CAF50;
             color: white;
             padding: 14px 20px;
@@ -34,6 +34,7 @@
 </head>
 <body>
     <div class="login-container">
+        <h1>Connexion</h1>
         <label for="uname"><b>Nom d'utilisateur</b></label>
         <input type="text" placeholder="Entrer le nom d'utilisateur" name="uname" required>
 
@@ -43,6 +44,9 @@
         <div id="captcha"></div> <!-- Container pour le captcha -->
         
         <button type="submit" id="submit-btn" disabled>Se connecter</button>
+        <a href="/inscription">
+            <button>s'inscrire</button>
+        </a>
     </div>
     <script>
         // Ajoutez ici votre code pour activer le bouton une fois le captcha réussi.
