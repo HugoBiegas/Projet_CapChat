@@ -82,6 +82,7 @@ button {
 
     const connectButton = document.getElementById('connect-button');
     connectButton.addEventListener('click', function() {
+      localStorage.clear();
         window.location.href = '/connexion';
     });
 
