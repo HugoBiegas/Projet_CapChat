@@ -171,6 +171,21 @@
 <!-- JavaScript pour modificationsCapChat.html -->
 <script>
   let imageSetID;
+  function isValidImageFile(file) {
+  // Vérifiez si le fichier existe et a une extension valide
+  if (!file || !file.name) {
+    return false;
+  }
+
+  const allowedExtensions = ['.png', '.jpg'];
+
+  // Vérifiez l'extension du fichier
+  const fileExtension = file.name.toLowerCase();
+  return allowedExtensions.some(ext => fileExtension.endsWith(ext));
+}
+
+
+  
     document.addEventListener("DOMContentLoaded", function() {
     const urlUsage = window.location.pathname.split("/").pop();
     const capchatNameElement = document.querySelector("#capchatName");
@@ -317,11 +332,6 @@ validateButton.addEventListener("click", () => {
   });
   }
   
-    function isValidImageFile(file) {
-      const allowedTypes = ["image/png", "image/jpeg"];
-      return allowedTypes.includes(file.type);
-    }
-  
     function updateImage(imagePath, newImagePath, newQuestion, imageFile) {
       const formData = new FormData();
       formData.append("newImagePath", newImagePath);
@@ -394,6 +404,8 @@ validateButton.addEventListener("click", () => {
                     throw new Error('Server response was not ok');
                 }
                 console.log(response.data.message);
+                document.getElementById("addImageModal").style.display = "none";
+
                 location.reload(true);
                 // Mettre à jour l'affichage si nécessaire
                 // ...
@@ -401,10 +413,6 @@ validateButton.addEventListener("click", () => {
             .catch(error => {
                 console.error('Erreur:', error);
             });
-
-        // Fermer la fenêtre modale
-        document.getElementById("addImageModal").style.display = "none";
-        window.location.reload();
     });
   </script>
   </body>

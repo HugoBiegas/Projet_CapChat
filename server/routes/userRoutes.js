@@ -77,7 +77,7 @@ router.get('/api/capchat/:urlUsage', (req, res) => {
     });
 });
 
-router.get('/api/urlusage', (req, res) => {
+router.get('/api/urlusage', authenticateToken, (req, res) => {
     connection.query(`SELECT URLUsage FROM ImageSets`, function (error, results, fields) {
         if (error) {
           return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('error Base de Donnée non accésible')}`);
@@ -428,7 +428,7 @@ router.get('/api/capchats', authenticateToken, async (req, res) => {
   }
 });
 
-router.delete('/api/deleteimage/:imagePath', async (req, res) => {
+router.delete('/api/deleteimage/:imagePath', authenticateToken, async (req, res) => {
   try {
     const { imagePath } = req.params;
 
@@ -472,41 +472,44 @@ router.delete('/api/deleteimage/:imagePath', async (req, res) => {
   }
 });
 
-router.post('*/api/ajoute/:imageName/:imageSetID', upload.single('imageFile'), async (req, res) => {
-  let imageName = req.params.imageName;
-  const question = req.body.question;
-  const imageSetID = req.params.imageSetID;
-  console.log(imageSetID);
-  
-  // Verifiez si le nom d'image est déjà utilisé
-  const existingImage = await query('SELECT * FROM Images WHERE FilePath = ?', [imageName]);
-  if (existingImage.length > 0) {
-    return res.status(400).json({ message: 'Le nom de l\'image est déjà utilisé' });
-  }
+router.post('/api/ajoute/:imageName/:imageSetID', authenticateToken, upload.single('imageFile'), async (req, res) => {
+  console.log('début de l ajoute');
+  try {
+    let imageName = req.params.imageName;
+    const question = req.body.question;
+    const imageSetID = req.params.imageSetID;
+    console.log(imageSetID);
 
-      //verifications du nom et mise en place .png et .jpg
-      let ext = path.extname(req.file.originalname).toLowerCase(); // Récupère l'extension de l'image actuelle
-      let newExt = path.extname(imageName).toLowerCase(); // Récupère l'extension de la nouvelle image
-      console.log(ext + " : "+ newExt);
-      // Vérifie si l'extension de la nouvelle image est .png ou .jpg
-      if (newExt !== '.png' && newExt !== '.jpg') {
-        imageName += ext; // Si l'extension n'est pas .png ou .jpg, ajoute l'extension de l'image actuelle
-      } else if (ext !== newExt) {
-        // Si l'extension de l'image actuelle est différente de celle de la nouvelle image, modifie l'extension de la nouvelle image pour qu'elle corresponde à celle de l'image actuelle
-        imageName = path.basename(imageName, newExt) + ext;
-      }
-  
-      console.log(imageName);
-  // Déplacez l'image téléchargée vers le bon dossier en fonction de la présence de la question
-  const destinationDir = question ? 'singuliers' : 'neutres';
-  const oldfilePath = path.join(__dirname, '..', 'views', 'image', req.file.originalname);
-  const newFilePath = path.join(__dirname, '..', 'views', 'image', destinationDir, imageName);
-  fs.renameSync(oldfilePath, newFilePath, function(err) {
-    if (err) {
-      console.log(err)
-      return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur lors du renommage du fichier')}`);
+    // Vérifiez si le nom d'image est déjà utilisé
+    const existingImage = await query('SELECT * FROM Images WHERE FilePath = ?', [imageName]);
+    if (existingImage.length > 0) {
+      return res.status(400).json({ message: 'Le nom de l\'image est déjà utilisé' });
     }
-  });
+
+    // Vérifiez le type d'image
+    if (!isValidImageFile(req.file)) {
+      return res.status(400).json({ message: 'Veuillez sélectionner un fichier d\'image au format .png, .jpg ou .jpeg' });
+    }
+
+    // Vérifiez et mettez à jour l'extension de l'image
+    let ext = path.extname(req.file.originalname).toLowerCase();
+    let newExt = path.extname(imageName).toLowerCase();
+    console.log(ext + " : "+ newExt);
+
+    // Ajoutez plus d'extensions d'image à vérifier
+    if (newExt !== '.png' && newExt !== '.jpg' && newExt !== '.jpeg') {
+      imageName += ext;
+    } else if (ext !== newExt) {
+      imageName = path.basename(imageName, newExt) + ext;
+    }
+
+    console.log(imageName);
+
+    // Déplacez l'image téléchargée vers le bon dossier en fonction de la présence de la question
+    const destinationDir = question ? 'singuliers' : 'neutres';
+    const oldFilePath = req.file.path;
+    const newFilePath = path.join(__dirname, '..', 'views', 'image', destinationDir, imageName);
+    fs.renameSync(oldFilePath, newFilePath);
 
     // Insérer la nouvelle image dans la base de données
     const insertQuery = 'INSERT INTO Images (ImageSetID, FilePath, Question) VALUES (?, ?, ?)';
@@ -519,7 +522,24 @@ router.post('*/api/ajoute/:imageName/:imageSetID', upload.single('imageFile'), a
       // Succès
       res.status(200).json({ message: 'Image ajoutée avec succès' });
     });
-  });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur de serveur' });
+  }
+});
+function isValidImageFile(file) {
+  // Vérifiez si le fichier existe et a une extension valide
+  if (!file || !file.originalname) {
+    return false;
+  }
+
+  const allowedExtensions = ['.png', '.jpg'];
+
+  // Vérifiez l'extension du fichier
+  const fileExtension = path.extname(file.originalname).toLowerCase();
+  return allowedExtensions.includes(fileExtension);
+}
+
 
 
 
