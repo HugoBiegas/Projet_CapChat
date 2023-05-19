@@ -169,7 +169,7 @@
       const urlUsage = window.location.pathname.split("/").pop();
       const capchatNameElement = document.querySelector("#capchatName");
       capchatNameElement.textContent = urlUsage;
-  
+    
       fetch(`/api/capchatall/${urlUsage}`)
         .then(response => {
           if (!response.ok) {
@@ -250,8 +250,27 @@ function createTableRow(imagePath, question) {
 }
 
 function deleteImage(imagePath) {
-  // Mettez ici le code pour supprimer l'image...
+  const confirmation = confirm("Voulez-vous vraiment supprimer cette image ?");
+
+  if (confirmation) {
+    fetch(`/api/deleteimage/${imagePath}`, { method: 'DELETE' })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        // Afficher le message d'erreur sur la page
+        alert(data.message);
+      } else {
+        // Image supprimée avec succès, effectuer d'autres actions si nécessaire
+        console.log('Image supprimée avec succès');
+      }
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+    });
+
+  }
 }
+
 
   
     function openModal(imagePath, question) {

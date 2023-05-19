@@ -26,6 +26,7 @@
         #capchatsTable tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+        
     </style>
 </head>
 <body>
@@ -75,7 +76,20 @@
                 .then(response => response.json())
                 .then(data => {
                     const capchatsTable = document.querySelector("#capchatsTable");
-                    console.log(data);
+                    // Vider le tableau s'il n'y a pas de CapChats créés par l'utilisateur
+                    if (data.length === 0) {
+                        const emptyRow = document.createElement("tr");
+                        const emptyCell = document.createElement("td");
+                        emptyCell.setAttribute("colspan", "5");
+                        emptyCell.textContent = "Vous n'avez pas créé de CapChats.";
+                        emptyCell.style.textAlign = "center"; // Centrer le texte
+                        emptyCell.style.fontSize = "20px"; // Taille du texte plus grande
+                        emptyCell.style.fontWeight = "bold"; // Texte en gras
+                        emptyRow.appendChild(emptyCell);
+                        capchatsTable.appendChild(emptyRow);
+                        return;
+                    }
+
                     // Créer une nouvelle ligne pour chaque CapChat
                     data.forEach(capchat => {
                         const row = document.createElement("tr");

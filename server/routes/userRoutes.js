@@ -418,16 +418,58 @@ router.get('/api/user', authenticateToken, async (req, res) => {
 router.get('/api/capchats', authenticateToken, async (req, res) => {
   try {
       const capchats = await query('SELECT COUNT(Images.ID) as nombreImage, ImageSets.URLUsage FROM ImageSets LEFT JOIN Images ON Images.ImageSetID = ImageSets.ID WHERE ImageSets.UserID = ? GROUP BY ImageSets.ID', [req.user.id]);
-      if (capchats.length === 0) {
-        return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('Aucun CapChat trouvé')}`);
-      }
-
       res.json(capchats);
   } catch (error) {
       console.error(error);
       return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur de serveur')}`);
   }
 });
+
+router.delete('/api/deleteimage/:imagePath', async (req, res) => {
+  try {
+    const { imagePath } = req.params;
+
+    // Vérifier si l'image existe dans la base de données
+    const image = await query('SELECT * FROM Images WHERE FilePath = ?', [imagePath]);
+    if (image.length === 0) {
+      return res.status(404).json({ message: 'Image introuvable' });
+    }
+
+    // Vérifier si l'image a une question
+    const hasQuestion = image[0].Question !== null;
+
+    if (hasQuestion) {
+      // Vérifier combien d'images singulières restent
+      const singularImages = await query('SELECT ID FROM Images WHERE Question IS NOT NULL');
+      if (singularImages.length <= 1) {
+        return res.status(400).json({ message: 'Vous devez conserver au moins une image singulière pour le CapChat' });
+      }
+    } else {
+      // Vérifier combien d'images neutres restent
+      const neutralImages = await query('SELECT ID FROM Images WHERE Question IS NULL');
+      if (neutralImages.length <= 7) {
+        return res.status(400).json({ message: 'Vous devez avoir au moins 7 images neutres pour le CapChat' });
+      }
+    }
+
+    // Supprimer l'image de la base de données
+    await query('DELETE FROM Images WHERE FilePath = ?', [imagePath]);
+
+    // Déterminer le dossier où se trouve l'image en fonction de la présence ou non d'une question
+    const imageFolder = hasQuestion ? 'singuliers' : 'neutres';
+
+    // Supprimer l'image du système de fichiers (assurez-vous d'adapter le chemin d'accès selon votre configuration)
+    const filePath = path.join(__dirname, '..','views','image', imageFolder, imagePath);
+    fs.unlinkSync(filePath);
+
+    return res.status(200).json({ message: 'Image supprimée avec succès' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Erreur lors de la suppression de l\'image' });
+  }
+});
+
+
 
 router.get('*/erreur/:idErreur', (req, res) => {
   const idErreur = req.params.idErreur;
