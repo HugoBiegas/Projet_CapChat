@@ -144,8 +144,8 @@ router.get('/api/capchatall/:urlUsage', authenticateToken, async (req, res) => {
         return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('CapChat non trouvé')}`);
       }
 
-      const imagesNeutres = await query('SELECT FilePath FROM Images WHERE ImageSetID = ? AND Question IS NULL', [capchat[0].ID]);
-      const imageSinguliere = await query('SELECT FilePath, Question FROM Images WHERE ImageSetID = ? AND Question IS NOT NULL', [capchat[0].ID]);
+      const imagesNeutres = await query('SELECT FilePath,ImageSetID FROM Images WHERE ImageSetID = ? AND Question IS NULL', [capchat[0].ID]);
+      const imageSinguliere = await query('SELECT FilePath,ImageSetID,Question FROM Images WHERE ImageSetID = ? AND Question IS NOT NULL', [capchat[0].ID]);
 
       res.json({ imagesNeutres, imageSinguliere });
   } catch (error) {
@@ -176,8 +176,11 @@ router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('ima
         return res.redirect(req.originalUrl + `/erreur/400?message=${encodeURIComponent('Le nom de l image est déjà utilisé')}`);
       }
     }
+    let ext ='.png';
+    if(imageFile){
+      ext = path.extname(imageFile.originalname).toLowerCase(); // Récupère l'extension de l'image actuelle
+    }
     //verifications du nom et mise en place .png et .jpg
-    let ext = path.extname(imageFile.originalname).toLowerCase(); // Récupère l'extension de l'image actuelle
     let newExt = path.extname(newImagePath).toLowerCase(); // Récupère l'extension de la nouvelle image
     console.log(ext + " : "+ newExt);
     // Vérifie si l'extension de la nouvelle image est .png ou .jpg
@@ -468,6 +471,57 @@ router.delete('/api/deleteimage/:imagePath', async (req, res) => {
     return res.status(500).json({ message: 'Erreur lors de la suppression de l\'image' });
   }
 });
+
+router.post('*/api/ajoute/:imageName/:imageSetID', upload.single('imageFile'), async (req, res) => {
+  let imageName = req.params.imageName;
+  const question = req.body.question;
+  const imageSetID = req.params.imageSetID;
+  console.log(imageSetID);
+  
+  // Verifiez si le nom d'image est déjà utilisé
+  const existingImage = await query('SELECT * FROM Images WHERE FilePath = ?', [imageName]);
+  if (existingImage.length > 0) {
+    return res.status(400).json({ message: 'Le nom de l\'image est déjà utilisé' });
+  }
+
+      //verifications du nom et mise en place .png et .jpg
+      let ext = path.extname(req.file.originalname).toLowerCase(); // Récupère l'extension de l'image actuelle
+      let newExt = path.extname(imageName).toLowerCase(); // Récupère l'extension de la nouvelle image
+      console.log(ext + " : "+ newExt);
+      // Vérifie si l'extension de la nouvelle image est .png ou .jpg
+      if (newExt !== '.png' && newExt !== '.jpg') {
+        imageName += ext; // Si l'extension n'est pas .png ou .jpg, ajoute l'extension de l'image actuelle
+      } else if (ext !== newExt) {
+        // Si l'extension de l'image actuelle est différente de celle de la nouvelle image, modifie l'extension de la nouvelle image pour qu'elle corresponde à celle de l'image actuelle
+        imageName = path.basename(imageName, newExt) + ext;
+      }
+  
+      console.log(imageName);
+  // Déplacez l'image téléchargée vers le bon dossier en fonction de la présence de la question
+  const destinationDir = question ? 'singuliers' : 'neutres';
+  const oldfilePath = path.join(__dirname, '..', 'views', 'image', req.file.originalname);
+  const newFilePath = path.join(__dirname, '..', 'views', 'image', destinationDir, imageName);
+  fs.renameSync(oldfilePath, newFilePath, function(err) {
+    if (err) {
+      console.log(err)
+      return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur lors du renommage du fichier')}`);
+    }
+  });
+
+    // Insérer la nouvelle image dans la base de données
+    const insertQuery = 'INSERT INTO Images (ImageSetID, FilePath, Question) VALUES (?, ?, ?)';
+    connection.query(insertQuery, [imageSetID, imageName, question], function (error, results, fields) {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Erreur lors de l\'insertion de l\'image dans la base de données' });
+      }
+
+      // Succès
+      res.status(200).json({ message: 'Image ajoutée avec succès' });
+    });
+  });
+
+
 
 
 
