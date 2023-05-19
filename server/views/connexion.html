@@ -66,6 +66,18 @@ const passwordInput = document.querySelector('input[name="password"]');
 // Vérifier si les valeurs des champs existent dans le localStorage
 const storedUsername = localStorage.getItem('storedUsername');
 const storedPassword = localStorage.getItem('storedPassword');
+  // Récupérer le message d'erreur de la requête dans l'URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const errorMessage = urlParams.get('message');
+
+  // Vérifier si un message d'erreur existe
+  if (errorMessage) {
+    // Afficher le message d'erreur dans une alerte
+    alert(errorMessage);
+    // Supprimer le message d'erreur de l'URL
+    history.replaceState(null, '', window.location.pathname);
+
+  }
 if (storedUsername) {
   usernameInput.value = storedUsername; // Restaurer la valeur du champ "Nom d'utilisateur"
 }

@@ -205,36 +205,54 @@
     }
 });
 
-    function createTableRow(imagePath, question) {
-      const row = document.createElement("tr");
+function createTableRow(imagePath, question) {
+  const row = document.createElement("tr");
+
+  const imageCell = document.createElement("td");
+  const imageThumbnail = document.createElement("img");
+  imageThumbnail.src = `/views/image/${question ? 'singuliers' : 'neutres'}/${imagePath}`;
+  imageThumbnail.alt = imagePath;
+  imageThumbnail.classList.add("image-thumbnail");
+  imageCell.appendChild(imageThumbnail);
+  row.appendChild(imageCell);
+
+  const imageNameCell = document.createElement("td");
+  imageNameCell.textContent = imagePath;
+  row.appendChild(imageNameCell);
+
+  const questionCell = document.createElement("td");
+  questionCell.textContent = question || "";
+  row.appendChild(questionCell);
+
+  const actionsCell = document.createElement("td");
+  const modifyButton = document.createElement("button");
+  modifyButton.textContent = "Modifier";
+  modifyButton.addEventListener("click", () => {
+    openModal(imagePath, question);
+  });
+  actionsCell.appendChild(modifyButton);
   
-      const imageCell = document.createElement("td");
-      const imageThumbnail = document.createElement("img");
-      imageThumbnail.src = `/views/image/${question ? 'singuliers' : 'neutres'}/${imagePath}`;
-      imageThumbnail.alt = imagePath;
-      imageThumbnail.classList.add("image-thumbnail");
-      imageCell.appendChild(imageThumbnail);
-      row.appendChild(imageCell);
-  
-      const imageNameCell = document.createElement("td");
-      imageNameCell.textContent = imagePath;
-      row.appendChild(imageNameCell);
-  
-      const questionCell = document.createElement("td");
-      questionCell.textContent = question || "";
-      row.appendChild(questionCell);
-  
-      const actionsCell = document.createElement("td");
-      const modifyButton = document.createElement("button");
-      modifyButton.textContent = "Modifier";
-      modifyButton.addEventListener("click", () => {
-        openModal(imagePath, question);
-      });
-      actionsCell.appendChild(modifyButton);
-      row.appendChild(actionsCell);
-  
-      return row;
-    }
+  // Ajouter une barre oblique entre les boutons
+  const slash = document.createTextNode(" / ");
+  actionsCell.appendChild(slash);
+
+  // Ajouter un bouton de suppression
+  const deleteButton = document.createElement("button");
+  deleteButton.textContent = "Supprimer";
+  deleteButton.addEventListener("click", () => {
+    deleteImage(imagePath);
+  });
+  actionsCell.appendChild(deleteButton);
+
+  row.appendChild(actionsCell);
+
+  return row;
+}
+
+function deleteImage(imagePath) {
+  // Mettez ici le code pour supprimer l'image...
+}
+
   
     function openModal(imagePath, question) {
       const modal = document.getElementById("myModal");
@@ -289,6 +307,8 @@
   
         // Fermer la fenêtre modale
         modal.style.display = "none";
+        window.location.reload();
+
       });
   
       cancelButton.addEventListener("click", () => {
