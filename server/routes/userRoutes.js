@@ -43,6 +43,10 @@ router.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'index.html'));
 });
 
+router.get('/information', (req,res) =>{
+  res.sendFile(path.join(__dirname, '..', 'views', 'information.html'));
+});
+
 router.get('/inscription', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'views', 'inscription.html'));
 });
@@ -77,6 +81,37 @@ router.get('/api/capchat/:urlUsage', (req, res) => {
     });
 });
 
+router.get('/api/capChatTheme/:name', (req, res) => {
+  const themeName = req.params.name;
+  connection.query(`SELECT ImageSets.ID, ImageSets.URLUsage FROM ImageSets LEFT JOIN Themes ON ImageSets.ThemeID = Themes.ID WHERE Themes.Name = ?`, [themeName], function (error, results, fields) {
+    if (error) {
+      return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur de base de données')}`);
+    }
+    if (results.length === 0) {
+      return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('Thème non trouvé')}`);
+    }
+
+    const imageSets = results;
+    const imageSetIDs = imageSets.map(imageSet => imageSet.ID);
+
+    connection.query(`SELECT FilePath FROM Images WHERE ImageSetID IN (?) AND Question IS NULL ORDER BY RAND() LIMIT 7`, [imageSetIDs], function (error, results, fields) {
+      if (error) {
+        return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur de base de données')}`);
+      }
+      const imagesNeutres = results;
+      
+      connection.query(`SELECT ImageSets.URLUsage, Images.FilePath, Images.Question FROM ImageSets LEFT JOIN Images ON Images.ImageSetID = ImageSets.ID WHERE ImageSets.ThemeID IN (SELECT ID FROM Themes WHERE Themes.Name = ?) AND Images.Question IS NOT NULL ORDER BY RAND() LIMIT 1`, [themeName], function (error, results, fields) {
+        if (error) {
+          return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur de base de données')}`);
+        }
+        const imageSinguliere = results;
+
+        res.json({ imagesNeutres, imageSinguliere });
+      });
+    });
+  });
+});
+
 router.get('/api/urlusage', authenticateToken, (req, res) => {
     connection.query(`SELECT URLUsage FROM ImageSets`, function (error, results, fields) {
         if (error) {
@@ -91,19 +126,38 @@ router.get('/api/urlusage', authenticateToken, (req, res) => {
 
 
 
-router.get('*/capchat/:urlUsage', (req, res) => {
-    const urlUsage = req.params.urlUsage;
-    connection.query(`SELECT id FROM ImageSets WHERE URLUsage = ?`, [urlUsage], function (error, results, fields) {
-        if (error) {
-          return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('error Base de Donnée non accésible')}`);
-        }
-        if (results.length === 0) {
-          return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('CapChat non trouvé')}`);
-        }
-        // Si l'URLUsage existe, redirigez vers le fichier HTML
-        res.sendFile(path.join(__dirname, '../views', 'capchat.html'));
+router.get(['*/capchatTheme/:name', '*/capchat/:urlUsage'], (req, res) => {
+  const urlUsage = req.params.urlUsage;
+  const name = req.params.name;
+
+  // Votre code de gestion pour les deux types de routes
+
+  if (name) {
+    // Si le paramètre 'name' est présent, il s'agit d'une route capchatTheme/:name
+    connection.query(`SELECT ID FROM Themes WHERE Name = ?`, [name], function (error, results, fields) {
+      if (error) {
+        return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur Base de Données non accessible')}`);
+      }
+      if (results.length === 0) {
+        return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('Thème non trouvé')}`);
+      }
     });
+  } else {
+    // Si le paramètre 'urlUsage' est présent, il s'agit d'une route capchat/:urlUsage
+    connection.query(`SELECT ID FROM ImageSets WHERE URLUsage = ?`, [urlUsage], function (error, results, fields) {
+      if (error) {
+        return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur Base de Données non accessible')}`);
+      }
+      if (results.length === 0) {
+        return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('CapChat non trouvé')}`);
+      }
+    });
+  }
+  // Si le thème existe, renvoyez le fichier HTML
+  res.sendFile(path.join(__dirname, '../views', 'capchat.html'));
 });
+
+
 
 router.get('*/modification/:urlUsage', authenticateToken, async (req, res) => {
   try {
@@ -541,8 +595,27 @@ function isValidImageFile(file) {
 }
 
 
+// API pour récupérer tous les thèmes
+router.get('/api/capChatThemes', async (req, res) => {
+  try {
+    const themes = await query('SELECT Themes.Name AS nomTheme, COUNT(Images.ID) AS nombreImages, ImageSets.URLUsage AS urlUsageTheme FROM Themes LEFT JOIN ImageSets ON ImageSets.ThemeID = Themes.ID LEFT JOIN Images ON Images.ImageSetID = ImageSets.ID GROUP BY Themes.ID');
+    res.json(themes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur de serveur' });
+  }
+});
 
-
+// API pour récupérer tous les CapChat existants
+router.get('/api/allcapChat', async (req, res) => {
+  try {
+    const capChats = await query('SELECT ImageSets.URLUsage AS urlUsage, COUNT(Images.ID) AS nombreImages, Themes.Name AS nomCapChat FROM ImageSets LEFT JOIN Images ON Images.ImageSetID = ImageSets.ID LEFT JOIN Themes ON ImageSets.ThemeID = Themes.ID GROUP BY ImageSets.ID');
+    res.json(capChats);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur de serveur' });
+  }
+});
 
 
 router.get('*/erreur/:idErreur', (req, res) => {

@@ -62,155 +62,155 @@
     </div>
     <div class="question" id="question"></div>
     <div class="grid-container" id="image-container"></div>
+
     <script>
         function getRandomElements(arr, count) {
-          const shuffled = [...arr];
-          for (let i = shuffled.length; i--;) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-          }
-          return shuffled.slice(0, count);
+            const shuffled = [...arr];
+            for (let i = shuffled.length; i--;) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled.slice(0, count);
         }
-      
+
         function updateThermometer(remainingTime, totalTime) {
-          const thermometerInner = document.getElementById('thermometer-inner');
-          const percentage = (remainingTime / totalTime) * 100;
-          const red = Math.round(255 - (255 * (remainingTime / totalTime)));
-          const green = Math.round(255 * (remainingTime / totalTime));
-          const color = `rgb(${red}, ${green}, 0)`;
-      
-          thermometerInner.style.width = `${percentage}%`;
-          thermometerInner.style.backgroundColor = color;
+            const thermometerInner = document.getElementById('thermometer-inner');
+            const percentage = (remainingTime / totalTime) * 100;
+            const red = Math.round(255 - (255 * (remainingTime / totalTime)));
+            const green = Math.round(255 * (remainingTime / totalTime));
+            const color = `rgb(${red}, ${green}, 0)`;
+
+            thermometerInner.style.width = `${percentage}%`;
+            thermometerInner.style.backgroundColor = color;
         }
-      
-        document.addEventListener('DOMContentLoaded', (event) => {
-          const urlPathname = window.location.pathname;
-          const urlSegments = urlPathname.split('/');
-          const urlUsageIndex = urlSegments.findIndex(segment => segment === 'capchat') + 1;
-          const urlUsage = urlSegments[urlUsageIndex];
-      
-          let totalTime = localStorage.getItem('totalTime') ? parseInt(localStorage.getItem('totalTime')) : 30;
-          let remainingTime = localStorage.getItem('remainingTime') ? parseInt(localStorage.getItem('remainingTime')) : totalTime;
-          let timerInterval;
-          
-          function startTimer() {
-            timerInterval = setInterval(() => {
-              if (remainingTime <= 0) {
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlPathname = window.location.pathname;
+            const urlSegments = urlPathname.split('/');
+            const urlUsage = urlSegments[urlSegments.length - 1];
+            const isTheme = urlSegments[urlSegments.length - 2] === 'capchatTheme';
+
+            let apiUrl;
+            if (isTheme) {
+                apiUrl = `/api/capChatTheme/${urlUsage}`;
+            } else {
+                apiUrl = `/api/capchat/${urlUsage}`;
+            }
+
+            let totalTime = localStorage.getItem('totalTime') ? parseInt(localStorage.getItem('totalTime')) : 30;
+            let remainingTime = localStorage.getItem('remainingTime') ? parseInt(localStorage.getItem('remainingTime')) : totalTime;
+            let timerInterval;
+
+            function startTimer() {
+                timerInterval = setInterval(() => {
+                    if (remainingTime <= 0) {
+                        clearInterval(timerInterval);
+                        if (totalTime === 5) {
+                            handleCapChatFailure(timerInterval);
+                        } else {
+                            remainingTime = totalTime;
+                            localStorage.setItem('remainingTime', remainingTime);
+                            refreshCapChat();
+                            startTimer();
+                        }
+                    } else {
+                        remainingTime--;
+                        localStorage.setItem('remainingTime', remainingTime);
+                        document.getElementById('timer').innerText = remainingTime;
+                        updateThermometer(remainingTime, totalTime);
+                    }
+                }, 1000);
+            }
+
+            function setupTimer() {
                 clearInterval(timerInterval);
-                if (totalTime === 5) {
-                    handleCapChatFailure(timerInterval);
-                } else {
-                  remainingTime = totalTime;
-                  localStorage.setItem('remainingTime', remainingTime);
-                  refreshCapChat();
-                  startTimer();
-                }
-              } else {
-                remainingTime--;
-                localStorage.setItem('remainingTime', remainingTime);
+                remainingTime = localStorage.getItem('remainingTime') ? parseInt(localStorage.getItem('remainingTime')) : totalTime;
                 document.getElementById('timer').innerText = remainingTime;
                 updateThermometer(remainingTime, totalTime);
-              }
-            }, 1000);
-          }
-      
-          function setupTimer() {
-            clearInterval(timerInterval);
-            remainingTime = localStorage.getItem('remainingTime') ? parseInt(localStorage.getItem('remainingTime')) : totalTime;
-            document.getElementById('timer').innerText = remainingTime;
-            updateThermometer(remainingTime, totalTime);
-            startTimer();
-          }
-      
-          // Fonction pour rafraîchir le CAPTCHA
-          function refreshCapChat() {
-            clearInterval(timerInterval); // Arrêt du minuteur
-            totalTime -= 5;
-            remainingTime = totalTime;
-            localStorage.setItem('totalTime', totalTime); // Mise à jour du temps total dans localStorage
-            localStorage.setItem('remainingTime', remainingTime); // Mise à jour du temps restant dans localStorage
-            window.location.reload(); // Rechargement de la page
-          }
-      
-          // Fonction pour gérer le clic sur une image
-          function handleImageClick(index) {
-            const imageElements = document.getElementsByClassName('capchat-image');
-            const clickedImage = imageElements[index];
-      
-            // Vérification si l'image cliquée est une image singulière
-            if (clickedImage.dataset.isSinguliere === 'true') {
-              handleCapChatSuccess(timerInterval,urlUsage);
-            } else {
-              remainingTime -= 5; // Réduction du temps restant
-              if (remainingTime <= 0) {
-                if (totalTime === 5) {
-                  handleCapChatFailure(timerInterval);
-                } else {
-                  refreshCapChat(); // Rafraîchissement du CAPTCHA
-                }
-              } else {
-                refreshCapChat(); // Rafraîchissement du CAPTCHA
-              }
+                startTimer();
             }
-          }
-      
-     fetch(`/api/capchat/${urlUsage}`)
-    .then((response) => response.json())
-    .then((data) => {
-        const imageContainer = document.getElementById('image-container');
-        const question = document.getElementById('question');
 
-        const imageSinguliere = data.imageSinguliere[0];  // Prend la première image singulière
-        question.innerText = imageSinguliere.Question;
+            function refreshCapChat() {
+                clearInterval(timerInterval);
+                totalTime -= 5;
+                remainingTime = totalTime;
+                localStorage.setItem('totalTime', totalTime);
+                localStorage.setItem('remainingTime', remainingTime);
+                window.location.reload();
+            }
 
-        let imagesNeutres = data.imagesNeutres;  // Prend toutes les images neutres
-        let images = imagesNeutres.concat(imageSinguliere);  // Concatène les images neutres et singulières
+            function handleImageClick(index) {
+                const imageElements = document.getElementsByClassName('capchat-image');
+                const clickedImage = imageElements[index];
 
-        //module aléatoire 
-        for (let i = images.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [images[i], images[j]] = [images[j], images[i]];
-        }
+                if (clickedImage.dataset.isSinguliere === 'true') {
+                    handleCapChatSuccess(timerInterval, urlUsage);
+                } else {
+                    remainingTime -= 5;
+                    if (remainingTime <= 0) {
+                        if (totalTime === 5) {
+                            handleCapChatFailure(timerInterval);
+                        } else {
+                            refreshCapChat();
+                        }
+                    } else {
+                        refreshCapChat();
+                    }
+                }
+            }
 
-        images.forEach((image, index) => {
-            const imgElement = document.createElement('img');
-            imgElement.src = `/views/image/${image === imageSinguliere ? 'singuliers' : 'neutres'}/${image.FilePath}`;
-            imgElement.classList.add('capchat-image');
-            imgElement.dataset.isSinguliere = (image === imageSinguliere).toString();
-            imgElement.addEventListener('click', () => handleImageClick(index));
-            imageContainer.appendChild(imgElement);
+            fetch(apiUrl)
+                .then((response) => response.json())
+                .then((data) => {
+                    const imageContainer = document.getElementById('image-container');
+                    const question = document.getElementById('question');
+
+                    const imageSinguliere = data.imageSinguliere[0];
+                    question.innerText = imageSinguliere.Question;
+
+                    let imagesNeutres = data.imagesNeutres;
+                    let images = imagesNeutres.concat(imageSinguliere);
+
+                    for (let i = images.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [images[i], images[j]] = [images[j], images[i]];
+                    }
+
+                    images.forEach((image, index) => {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = `/views/image/${image === imageSinguliere ? 'singuliers' : 'neutres'}/${image.FilePath}`;
+                        imgElement.classList.add('capchat-image');
+                        imgElement.dataset.isSinguliere = (image === imageSinguliere).toString();
+                        imgElement.addEventListener('click', () => handleImageClick(index));
+                        imageContainer.appendChild(imgElement);
+                    });
+
+                    setupTimer();
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
         });
 
-        setupTimer();
-    })
-    .catch((error) => {
-        console.error(error);
-    });
-});
-const storedUsername = localStorage.getItem('storedUsername');
-const storedPassword = localStorage.getItem('storedPassword');
+        function handleCapChatSuccess(timerInterval, urlUsage) {
+            clearInterval(timerInterval);
+            localStorage.clear();
+            localStorage.setItem('capchatSuccess', 'true');
+            localStorage.setItem('storedUrlUsage', urlUsage);
 
-// Fonction pour gérer la réussite du CapChat
-function handleCapChatSuccess(timerInterval,urlUsage) {
-  clearInterval(timerInterval);
-  localStorage.clear(); // Nettoyer le localStorage
-  localStorage.setItem('capchatSuccess', 'true'); // Stocker la réussite du CapChat dans localStorage
-  localStorage.setItem('storedUsername', storedUsername); // Stocker la réussite du CapChat dans localStorage
-  localStorage.setItem('storedPassword', storedPassword); // Stocker la réussite du CapChat dans localStorage
+            if (window.location.pathname.includes('/capchatTheme'))
+              window.location.pathname = window.location.pathname.replace(`/capchatTheme/${urlUsage}`, '');
+            else 
+              window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
+        }
 
-  window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
-}
-
-// Fonction pour gérer l'échec du CapChat
-function handleCapChatFailure(timerInterval) {
-  clearInterval(timerInterval); // Ajout de cette ligne pour arrêter le décompte du temps
-  alert("Vous n'êtes pas un humain !");
-  localStorage.clear();
-  localStorage.setItem('storedUsername', storedUsername); // Stocker la réussite du CapChat dans localStorage
-  localStorage.setItem('storedPassword', storedPassword); // Stocker la réussite du CapChat dans localStorage
-  localStorage.setItem('capchatSuccess', 'false'); // Stocker l'échec du CapChat dans localStorage
-  history.back(); // Retourner à la page précédente
-}
-      </script>
+        function handleCapChatFailure(timerInterval) {
+            clearInterval(timerInterval);
+            alert("Vous n'êtes pas un humain !");
+            localStorage.clear();
+            localStorage.setItem('capchatSuccess', 'false');
+            history.back();
+        }
+    </script>
 </body>
 </html>
