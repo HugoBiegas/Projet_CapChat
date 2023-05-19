@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.2/jszip.min.js"></script>
+
+    <title>Création de CaptChat</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        input[type="file"] {
+            margin-top: 5px;
+        }
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table th, table td {
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+        table td input[type="text"] {
+            width: 100%;
+        }
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Création de CaptChat</h1>
+    <form id="creationForm" enctype="multipart/form-data">
+        <label for="capchatName">Nom du CaptChat:</label>
+        <input type="text" id="capchatName" name="capchatName" required>
+
+        <label for="theme">Thème:</label>
+        <select id="theme" name="theme" required>
+        </select>
+
+        <div id="nouveauThemeContainer" style="display: none;">
+            <label for="nouveauTheme">Nouveau thème:</label>
+            <input type="text" id="nouveauTheme" name="nouveauTheme">
+        </div>
+
+        <label for="images">Images ou fichier ZIP:</label>
+        <input type="file" id="images" name="images" required accept=".zip, .png, .jpg, .jpeg" multiple>
+
+        <table id="imagesTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Nom</th>
+                    <th>Question</th>
+                    <th>Supprimer</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <button type="submit">Enregistrer le CaptChat</button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+    // Fetch themes from API
+    fetch('/api/themes')
+        .then(response => response.json())
+        .then(data => {
+            const themeSelect = document.getElementById('theme');
+            data.themes.forEach(theme => {
+                const option = document.createElement('option');
+                option.value = theme.ID;
+                option.textContent = theme.Name;
+                themeSelect.appendChild(option);
+            });
+            const option = document.createElement('option');
+            option.value = 'nouveau';
+            option.textContent = 'nouveaux théme';
+            themeSelect.appendChild(option);
+        })
+        .catch(error => console.error(error));
+});
+
+// Handle new theme display
+const themeSelect = document.getElementById('theme');
+const nouveauThemeContainer = document.getElementById('nouveauThemeContainer');
+themeSelect.addEventListener('change', () => {
+    if (themeSelect.value === 'nouveau') {
+        nouveauThemeContainer.style.display = 'block';
+    } else {
+        nouveauThemeContainer.style.display = 'none';
+    }
+});
+
+const imagesInput = document.getElementById('images');
+const imagesTable = document.getElementById('imagesTable');
+const imagesTableBody = imagesTable.querySelector('tbody');
+
+let globalIndex = 0;
+
+// Handle Image/ZIP files selection
+imagesInput.addEventListener('change', event => {
+    // Reset the image table
+    imagesTableBody.innerHTML = '';
+
+    // Fetch the files
+    const files = event.target.files;
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // If a ZIP file is selected
+        if (file.type === 'application/zip') {
+            JSZip.loadAsync(file).then(zip => {
+                let index = 0;
+
+                const imagePromises = [];
+
+                zip.forEach((relativePath, zipEntry) => {
+                    if (!zipEntry.dir && ['.png', '.jpg', '.jpeg'].includes(relativePath.slice(-4))) {
+                        const imagePromise = zipEntry.async('blob').then(zipFile => {
+                            const fileName = relativePath.split('/').pop();
+                            addImageToTable(zipFile, fileName, globalIndex);
+                            globalIndex += 1;
+                        });
+
+                        imagePromises.push(imagePromise);
+                    }
+                });
+
+                Promise.all(imagePromises)
+                    .then(() => {
+                        // All images from ZIP are added to the table
+                    })
+                    .catch(error => console.error(error));
+            })
+            .catch(error => console.error(error));
+        } else {
+            // Otherwise handle file as an individual image
+            addImageToTable(file, file.name, globalIndex);
+            globalIndex += 1;
+        }
+    }
+
+    imagesTable.style.display = 'table';
+});
+
+// Function to add image to table
+function addImageToTable(file, fileName, index) {
+    // Create a FileReader to read the contents of the file
+    const reader = new FileReader();
+    reader.onload = () => {
+        // Create the image preview element
+        const imagePreview = document.createElement('img');
+        imagePreview.src = reader.result;
+        imagePreview.width = 100;
+        imagePreview.height = 100;
+
+        // Create the input elements for the file name and question
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.name = `image_name_${index}`;
+        nameInput.value = fileName;
+
+        const questionInput = document.createElement('input');
+        questionInput.type = 'text';
+        questionInput.name = `image_question_${index}`;
+
+        // Create the delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.textContent = 'Supprimer';
+        deleteButton.addEventListener('click', () => {
+            deleteImageFromTable(deleteButton);
+        });
+        deleteButton.setAttribute('data-index', index);
+
+        // Create the table row and append all the elements
+        const row = document.createElement('tr');
+        [imagePreview, nameInput, questionInput, deleteButton].forEach(element => {
+            const cell = document.createElement('td');
+            cell.appendChild(element);
+            row.appendChild(cell);
+        });
+
+        // Append the row to the table body
+        imagesTableBody.appendChild(row);
+    };
+    reader.readAsDataURL(file);
+}
+
+// Function to delete image from table
+function deleteImageFromTable(deleteButton) {
+    const row = deleteButton.closest('tr'); // Get the parent row of the delete button
+    const index = parseInt(deleteButton.getAttribute('data-index')); // Get the index from the data-index attribute
+
+    row.remove(); // Remove the row from the table
+
+    // Update the indexes of the remaining images
+    const remainingRows = Array.from(imagesTableBody.querySelectorAll('tr'));
+    remainingRows.forEach((row, i) => {
+        const deleteButton = row.querySelector('button');
+        deleteButton.setAttribute('data-index', i);
+    });
+}
+
+const creationForm = document.getElementById('creationForm');
+creationForm.addEventListener('submit', event => {
+    event.preventDefault();
+
+    const formData = new FormData(creationForm);
+    const requestBody = {};
+    
+    // Extract field values
+    for (let pair of formData.entries()) {
+        const [name, value] = pair;
+        requestBody[name] = value;
+    }
+
+    // Extract image details
+    const images = [];
+    const rows = Array.from(imagesTableBody.querySelectorAll('tr'));
+    rows.forEach((row, index) => {
+        const nameInput = row.querySelector('input[name^="image_name_"]');
+        const questionInput = row.querySelector('input[name^="image_question_"]');
+        const image = {
+            name: nameInput.value,
+            question: questionInput.value
+        };
+        images.push(image);
+    });
+    requestBody.images = images;
+
+    // Send image to the server
+    fetch('/api/images', {
+        method: 'POST',
+        body: formData
+    }).then(response => response.json())
+    .then(data => {
+        // Handle server response
+        if (data.success) {
+            // On successful upload, send capchat creation request
+            fetch('/api/adcapchat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle server response
+                if (data.success) {
+                    alert('CapChat créé avec succès !');
+                    creationForm.reset();
+                    imagesTableBody.innerHTML = '';
+                    imagesTable.style.display = 'none';
+                } else {
+                    alert('Erreur lors de la création du CapChat.');
+                }
+            }).catch(error => console.error(error));
+        } else {
+            alert('Erreur lors de l\'envoi des images.');
+        }
+    }).catch(error => console.error(error));
+});
+
+    </script>
+</body>
+</html>

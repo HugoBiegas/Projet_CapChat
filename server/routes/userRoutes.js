@@ -43,6 +43,10 @@ router.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'index.html'));
 });
 
+router.get('/creationCapChat', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'views', 'creationCapChat.html'));
+});
+
 router.get('/information', (req,res) =>{
   res.sendFile(path.join(__dirname, '..', 'views', 'information.html'));
 });
@@ -605,6 +609,42 @@ router.get('/api/capChatThemes', async (req, res) => {
     res.status(500).json({ message: 'Erreur de serveur' });
   }
 });
+
+router.get('/api/themes', (req, res) => {
+  connection.query('SELECT * FROM Themes', (error, results) => {
+      if (error) {
+          res.status(500).json({ error });
+      } else {
+          res.json({ themes: results });
+      }
+  });
+});
+
+router.post('/api/adcapchat', upload.array('images'), async (req, res) => {
+  const { images } = req.body;
+
+  const moveFile = util.promisify(fs.rename);
+  const imageQueries = images.map(async (image, index) => {
+      const tempPath = req.files[index].path;
+      let newPath;
+
+      if (image.question) {
+          newPath = path.join(__dirname, 'singular', `${image.fileName}.jpg`);
+      } else {
+          newPath = path.join(__dirname, 'neutral', `${image.fileName}.jpg`);
+      }
+
+      await moveFile(tempPath, newPath);
+
+      return connection.query('INSERT INTO Images (ImageSetID, FilePath, Question) VALUES (?, ?, ?)', [imageSetID, newPath, image.question]);
+  });
+
+  await Promise.all(imageQueries);
+
+  res.json({ success: true });
+});
+
+
 
 // API pour récupérer tous les CapChat existants
 router.get('/api/allcapChat', async (req, res) => {
