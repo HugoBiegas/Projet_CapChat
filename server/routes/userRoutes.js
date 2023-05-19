@@ -152,58 +152,22 @@ router.get('/api/capchatall/:urlUsage', authenticateToken, async (req, res) => {
   }
 });
 
-/* A modifier pour faire fonctionner la modifications
-// Middleware pour déplacer le fichier téléchargé vers le dossier approprié
-const moveUploadedFile = function (req, res, next) {
-  const imageFile = req.file;
-  const newFolderPath = determineDestinationFolder(req.body); // Déterminez le dossier de destination en fonction de certaines conditions
-
-  if (!newFolderPath) {
-    // Si le dossier de destination n'est pas déterminé, passez au middleware suivant
-    return next();
-  }
-
-  const newFilePath = path.join(newFolderPath, imageFile.originalname);
-
-  fs.rename(imageFile.path, newFilePath, function (err) {
-    if (err) {
-      console.log(err);
-      return res.status(500).json({ message: 'Erreur lors du déplacement du fichier' });
-    }
-
-    // Mettez à jour le chemin du fichier dans req.file pour refléter le déplacement
-    req.file.path = newFilePath;
-    next();
-  });
-};
-
-function determineDestinationFolder(newQuestion) {
-  // Si newQuestion est vide ou non défini, retourner "neutres"
-  if (!newQuestion) {
-    return 'views\\image\\neutres';
-  }
-  
-  // Sinon, retourner "singuliers"
-  return 'views\\image\\singuliers';
-}
-
 
 // Route pour mettre à jour une image dans la base de données
-router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('imageFile'),moveUploadedFile, async (req, res) => {
+router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('imageFile'), async (req, res) => {
   try {
-    const { imagePath } = req.params; // Chemin de l'image à mettre à jour
-    const { newImagePath, newQuestion } = req.body; // Nouveau chemin et nouvelle question de l'image
-    const imageFile = req.file; // Fichier de l'image téléchargée
+    const { imagePath } = req.params;
+    const { newImagePath, newQuestion } = req.body;
+    const imageFile = req.file;
 
-    // Récupérer les informations de l'image à partir de la base de données en utilisant l'ancien chemin
     const imageData = await query('SELECT ID, Question FROM Images WHERE FilePath = ?', [imagePath]);
     if (imageData.length === 0) {
       return res.status(404).json({ message: "Image non trouvée" });
     }
-    const imageID = imageData[0].ID; // ID de l'image
-    const holdQuestion = imageData[0].Question; // Ancienne question de l'image
 
-    // Vérifier si le nouveau chemin est différent de l'ancien chemin et s'il est déjà utilisé par une autre image
+    const imageID = imageData[0].ID;
+    const oldQuestion = imageData[0].Question;
+
     if (!imageFile && newImagePath && newImagePath !== imagePath) {
       const existingImage = await query('SELECT ID FROM Images WHERE FilePath = ?', [newImagePath]);
       if (existingImage.length > 0) {
@@ -211,26 +175,39 @@ router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('ima
       }
     }
 
-    const currentFolder = holdQuestion ? "singuliers" : "neutres"; // Dossier actuel de l'image
-    const newFolder = newQuestion ? "singuliers" : "neutres"; // Nouveau dossier de l'image
+    const oldFolder = oldQuestion ? "singuliers" : "neutres";
+    const newFolder = newQuestion ? "singuliers" : "neutres";
 
-    // Si le dossier actuel est différent du nouveau dossier
-    if (currentFolder !== newFolder) {
-      const currentFolderPath = path.join(__dirname, '..', 'views', 'image', currentFolder, imagePath); // Chemin complet du dossier actuel
-      const newFolderPath = path.join(__dirname, '..', 'views', 'image', newFolder, newImagePath); // Chemin complet du nouveau dossier
-      //si il n'y a pas d'image on déplace le fichier
+    //mettre la métode pour déplacer l'image si l'utilisateur a ajouter une iamge
+    if (imageFile) {
+      const newFolderPath = path.join(__dirname, '..', 'views', 'image', newFolder);
+      const newFilePath = path.join(newFolderPath, newImagePath);
+
+      fs.rename(imageFile.path, newFilePath, function (err) {
+        if (err) {
+          console.log(err);
+          return res.status(500).json({ message: 'Erreur lors du déplacement du fichier' });
+        }
+
+        imageFile.path = newFilePath;
+      });
+    }
+
+    //si l'ancier fichier est différenet du nouveaux
+    if (oldFolder !== newFolder) {
+      const oldFolderPath = path.join(__dirname, '..', 'views', 'image', oldFolder, imagePath);
+      const newFolderPath = path.join(__dirname, '..', 'views', 'image', newFolder, newImagePath);
+      //si il n'y a pas de nouvelle image on déplace l'image si non on la suprime
       if(!imageFile){
-        // Renommer le fichier en déplaçant l'image vers le nouveau dossier
-        fs.renameSync(currentFolderPath, newFolderPath, function(err) {
+        fs.renameSync(oldFolderPath, newFolderPath, function(err) {
           if (err) {
             console.log(err)
             res.status(500).json({ message: 'Erreur lors du déplacement du fichier' });
             return;
           }
         });
-
       }else{
-        fs.unlinkSync(currentFolderPath, function(err) {
+        fs.unlinkSync(oldFolderPath, function(err) {
           if (err) {
             console.log(err)
             res.status(500).json({ message: 'Erreur lors de la suppression de l\'image précédente' });
@@ -239,11 +216,10 @@ router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('ima
         });
       }
     }
-    // Si le dossier actuel est le même que le nouveau dossier et le nouveau chemin est différent de l'ancien chemin
     else if (!imageFile && newImagePath && newImagePath !== imagePath) {
-      const currentFilePath = path.join(__dirname, '..', 'views', 'image', currentFolder, imagePath); // Chemin complet du fichier actuel
-      const newFilePath = path.join(__dirname, '..', 'views', 'image', currentFolder, newImagePath); // Chemin complet du nouveau fichier
-      fs.renameSync(currentFilePath, newFilePath, function(err) {
+      const oldFilePath = path.join(__dirname, '..', 'views', 'image', oldFolder, imagePath);
+      const newFilePath = path.join(__dirname, '..', 'views', 'image', oldFolder, newImagePath);
+      fs.renameSync(oldFilePath, newFilePath, function(err) {
         if (err) {
           console.log(err)
           res.status(500).json({ message: 'Erreur lors du renommage du fichier' });
@@ -251,21 +227,20 @@ router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('ima
         }
       });
     }
-    
-    let updateQuery = 'UPDATE Images SET FilePath = ?, Question = ? WHERE ID = ?'; // Requête SQL pour mettre à jour l'image
-    let values = [newImagePath, newQuestion, imageID]; // Valeurs pour la requête SQL
-    await query(updateQuery, values); // Exécution de la requête SQL pour mettre à jour les informations de l'image
 
-    res.json({ message: 'Image mise à jour avec succès' }); // Réponse JSON avec un message de succès
+    if(newQuestion ==='')
+      newQuestion = null;
+    
+    let updateQuery = 'UPDATE Images SET FilePath = ?, Question = ? WHERE ID = ?';
+    let values = [newImagePath, newQuestion, imageID];
+    await query(updateQuery, values);
+
+    res.json({ message: 'Image mise à jour avec succès' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur de serveur' });
   }
 });
-*/
-
-
-
 
   
 router.post('/inscription', async (req, res) => {
