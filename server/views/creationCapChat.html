@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.2/jszip.min.js"></script>
+    <script src="./node_modules/jszip/dist/jszip.min.js"></script>
 
     <title>Création de CaptChat</title>
     <style>
@@ -39,10 +39,22 @@
         button {
             margin-top: 10px;
         }
+
+        @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+        }
+
     </style>
 </head>
 <body>
     <h1>Création de CaptChat</h1>
+    <div id="modal" style="display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+        <div style="position: relative; margin: auto; top: 50%; width: 50px; height: 50px;">
+            <div id="spinner" style="border: 16px solid #f3f3f3; border-top: 16px solid #3498db; border-radius: 50%; width: 120px; height: 120px; animation: spin 2s linear infinite;"></div>
+        </div>
+    </div>
+
     <form id="creationForm" enctype="multipart/form-data">
         <label for="capchatName">Nom du CaptChat:</label>
         <input type="text" id="capchatName" name="capchatName" required>
@@ -113,21 +125,30 @@ const imagesTableBody = imagesTable.querySelector('tbody');
 let globalIndex = 0;
 
 // Handle Image/ZIP files selection
-imagesInput.addEventListener('change', event => {
-    // Reset the image table
-    imagesTableBody.innerHTML = '';
+// global variable to store all selected files
+let selectedFiles = [];
 
+const modal = document.getElementById('modal');
+const progress = document.getElementById('progress');
+
+imagesInput.addEventListener('change', event => {
     // Fetch the files
     const files = event.target.files;
 
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        // If a ZIP file is selected
-        if (file.type === 'application/zip') {
-            JSZip.loadAsync(file).then(zip => {
-                let index = 0;
+    // add newly selected files to the existing ones
+    selectedFiles = [...selectedFiles, ...files];
 
+    // Reset the image table
+    imagesTableBody.innerHTML = '';
+
+    modal.style.display = 'block'; // show the modal
+
+    for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        
+        // Check if the file is a ZIP
+        if (file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
+            JSZip.loadAsync(file).then(zip => {
                 const imagePromises = [];
 
                 zip.forEach((relativePath, zipEntry) => {
@@ -144,20 +165,36 @@ imagesInput.addEventListener('change', event => {
 
                 Promise.all(imagePromises)
                     .then(() => {
-                        // All images from ZIP are added to the table
+                        // hide the modal when all files have been processed
+                        if (i >= selectedFiles.length - 1) {
+                            modal.style.display = 'none';
+                        }
                     })
-                    .catch(error => console.error(error));
+                    .catch(error => {
+                        console.error('Error while adding images from ZIP:', error);
+                    });
             })
-            .catch(error => console.error(error));
-        } else {
-            // Otherwise handle file as an individual image
-            addImageToTable(file, file.name, globalIndex);
-            globalIndex += 1;
+            .catch(error => {
+                console.error('Error while loading ZIP:', error);
+            });
+        } else if (['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+            setTimeout(() => {
+                addImageToTable(file, file.name, globalIndex);
+                globalIndex += 1;
+
+                // hide the modal when all files have been processed
+                if (i >= selectedFiles.length - 1) {
+                    modal.style.display = 'none';
+                }
+            }, 1000); // ici, le délai est de 2 secondes, mais vous pouvez l'ajuster en fonction de vos besoins
+
         }
     }
-
     imagesTable.style.display = 'table';
 });
+
+
+
 
 // Function to add image to table
 function addImageToTable(file, fileName, index) {
@@ -220,65 +257,62 @@ function deleteImageFromTable(deleteButton) {
 
 const creationForm = document.getElementById('creationForm');
 creationForm.addEventListener('submit', event => {
-    event.preventDefault();
+  event.preventDefault();
 
-    const formData = new FormData(creationForm);
-    const requestBody = {};
-    
-    // Extract field values
-    for (let pair of formData.entries()) {
-        const [name, value] = pair;
-        requestBody[name] = value;
+  const formData = new FormData(creationForm);
+  const requestBody = {};
+
+  // Extract field values
+  for (let pair of formData.entries()) {
+    const [name, value] = pair;
+    requestBody[name] = value;
+  }
+
+  // Extract image details
+  const images = [];
+  const rows = Array.from(imagesTableBody.querySelectorAll('tr'));
+  rows.forEach((row, index) => {
+    const nameInput = row.querySelector('input[name^="image_name_"]');
+    const questionInput = row.querySelector('input[name^="image_question_"]');
+    const image = {
+      name: nameInput.value,
+      question: questionInput.value
+    };
+    images.push(image);
+  });
+
+  // Check if there is at least one image with a question and 7 images without a question
+  const questionImages = images.filter(image => image.question);
+  const nonQuestionImages = images.filter(image => !image.question);
+
+  if (questionImages.length < 1 || nonQuestionImages.length < 7) {
+    alert('Veuillez fournir au moins une image avec une question et 7 images sans question.');
+    return;
+  }
+
+  requestBody.images = images;
+
+  // Send image to the server
+  fetch('/api/newCapChat', {
+    method: 'POST',
+    body: JSON.stringify(requestBody),
+    headers: {
+      'Content-Type': 'application/json'
     }
-
-    // Extract image details
-    const images = [];
-    const rows = Array.from(imagesTableBody.querySelectorAll('tr'));
-    rows.forEach((row, index) => {
-        const nameInput = row.querySelector('input[name^="image_name_"]');
-        const questionInput = row.querySelector('input[name^="image_question_"]');
-        const image = {
-            name: nameInput.value,
-            question: questionInput.value
-        };
-        images.push(image);
-    });
-    requestBody.images = images;
-
-    // Send image to the server
-    fetch('/api/images', {
-        method: 'POST',
-        body: formData
-    }).then(response => response.json())
+  })
+    .then(response => response.json())
     .then(data => {
-        // Handle server response
-        if (data.success) {
-            // On successful upload, send capchat creation request
-            fetch('/api/adcapchat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Handle server response
-                if (data.success) {
-                    alert('CapChat créé avec succès !');
-                    creationForm.reset();
-                    imagesTableBody.innerHTML = '';
-                    imagesTable.style.display = 'none';
-                } else {
-                    alert('Erreur lors de la création du CapChat.');
-                }
-            }).catch(error => console.error(error));
-        } else {
-            alert('Erreur lors de l\'envoi des images.');
-        }
-    }).catch(error => console.error(error));
+      // Handle server response
+      if (data.success) {
+        alert('CapChat créé avec succès !');
+        creationForm.reset();
+        imagesTableBody.innerHTML = '';
+        imagesTable.style.display = 'none';
+      } else {
+        alert('Erreur lors de la création du CapChat.');
+      }
+    });
 });
-
     </script>
 </body>
 </html>

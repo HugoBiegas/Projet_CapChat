@@ -37,6 +37,7 @@ router.use('/views/image/neutres', express.static(path.join(__dirname, '..', 'vi
 router.use('/views/image/singuliers', express.static(path.join(__dirname, '..', 'views', 'image', 'singuliers')));
 router.use('/views/image', express.static(path.join(__dirname, '..', 'views', 'image')));
 router.use('/views/erreur', express.static(path.join(__dirname, '..', 'views', 'erreur')));
+router.use('/node_modules', express.static(path.join(__dirname, '..','..', 'node_modules')));
 
 
 router.get('/', (req, res) => {
@@ -656,6 +657,86 @@ router.get('/api/allcapChat', async (req, res) => {
     res.status(500).json({ message: 'Erreur de serveur' });
   }
 });
+
+
+router.post('/api/newCapChat', authenticateToken, upload.array('images'), async (req, res) => {
+  try {
+    const { capchatName, theme, nouveauTheme, images } = req.body;
+    const userID = req.user.id;
+    const imageFile = req.file.originalname;
+    
+    console.log('capchatName:', capchatName);
+    console.log('theme:', theme);
+    console.log('nouveauTheme:', nouveauTheme);
+    console.log('images:', images);
+    console.log('userID:', userID);
+    console.log('imageFile:', imageFile);
+
+    // Vérifier si le thème est nouveau
+    let themeID;
+    if (theme === 'nouveau') {
+      // Créer le nouveau thème
+      const insertThemeQuery = 'INSERT INTO Themes (Name) VALUES (?)';
+      const result = await query(insertThemeQuery, [nouveauTheme]);
+
+      themeID = result.insertId;
+    } else {
+      themeID = theme;
+    }
+
+    console.log('themeID:', themeID);
+
+    // Créer le capChat
+    const insertCapChatQuery = 'INSERT INTO ImageSets (UserID, ThemeID, URLUsage) VALUES (?, ?, ?)';
+    const capChatResult = await query(insertCapChatQuery, [userID, themeID, capchatName]);
+    const imageSetID = capChatResult.insertId;
+
+    console.log('imageSetID:', imageSetID);
+
+    // Parcourir les images et les ajouter à la base de données
+    for (const image of images) {
+      const { name, question } = image;
+
+      // Vérifier si l'image a une question
+      const isQuestionImage = !!question;
+
+      // Déterminer le dossier de destination en fonction de la présence d'une question
+      const destinationFolder = isQuestionImage ? 'singuliers' : 'neutres';
+
+      // Vérifier l'extension du fichier
+      let newFileName = name;
+      const extension = path.extname(name);
+      if (!extension || (extension !== '.png' && extension !== '.jpg' && extension !== '.jpeg')) {
+        // Obtenir l'extension de l'image originale
+        const originalExtension = path.extname(imageFile);
+  
+        // Vérifier l'extension de l'image originale
+        if (originalExtension === '.png' || originalExtension === '.jpg' || originalExtension === '.jpeg') {
+          newFileName += originalExtension;
+        } else {
+          return res.status(400).json({ error: 'Le fichier doit être une image PNG ou JPEG' });
+        }
+      }
+
+      console.log('newFileName:', newFileName);
+
+      // Déplacer le fichier vers le dossier de destination
+      const sourcePath = path.join(__dirname, '..', 'views', 'image', imageFile);
+      const destinationPath = path.join(__dirname, '..', 'views', 'image', destinationFolder, newFileName);
+      fs.renameSync(sourcePath, destinationPath);
+
+      // Insérer les informations de l'image dans la base de données
+      const insertImageQuery = 'INSERT INTO Images (ImageSetID, FilePath, Question) VALUES (?, ?, ?)';
+      await query(insertImageQuery, [imageSetID, newFileName, question]);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur de serveur' });
+  }
+});
+
 
 
 router.get('*/erreur/:idErreur', (req, res) => {

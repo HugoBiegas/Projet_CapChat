@@ -35,7 +35,7 @@ con.connect(function(err) {
 
         const userID = result[0].ID;
 
-        con.query("INSERT INTO Themes (Name,) VALUES (?)", [themeName], function(err, result) {
+        con.query("INSERT INTO Themes (Name) VALUES (?)", [themeName], function(err, result) {
           if (err) throw err;
           console.log("Theme inserted");
 
