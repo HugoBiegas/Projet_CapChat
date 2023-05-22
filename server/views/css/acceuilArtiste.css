@@ -1,0 +1,22 @@
+body {
+    font-family: Arial, sans-serif;
+}
+.navbar {
+    display: flex;
+    justify-content: space-around;
+    background-color: #f0f0f0;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+#capchatsTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+#capchatsTable th, #capchatsTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+#capchatsTable tr:nth-child(even) {
+    background-color: #f2f2f2;
+}

@@ -1,41 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Page de Connexion</title>
     <script src="/capchat/general.js"></script> <!-- Assurez-vous que le chemin est correct -->
-    <style>
-        .login-container {
-            width: 300px;
-            padding: 16px;
-            background-color: #f1f1f1;
-            margin: 0 auto;
-            margin-top: 100px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .login-container input[type=text], .login-container input[type=password] {
-            width: 100%;
-            padding: 12px 20px;
-            margin: 8px 0;
-            display: inline-block;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-        .login-container #submit-btn {
-            background-color: #ff0000; /* Rouge par défaut */
-            color: white;
-            padding: 14px 20px;
-            margin: 8px 0;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-        }
-        .login-container .success {
-            background-color: #00ff00 !important; /* Vert en cas de succès */
-            cursor: not-allowed;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/connexion.css">
 </head>
+
 <body>
     <div class="login-container">
         <h1>Connexion</h1>
@@ -47,91 +18,14 @@
             <input type="password" placeholder="Entrer le mot de passe" name="password" required>
 
             <button type="button" id="capchat-btn">CapChat</button> <!-- Bouton pour lancer le CapChat -->
-            <button type="submit" id="submit-btn" disabled>Se connecter</button> <!-- Bouton de connexion désactivé par défaut -->
+            <button type="submit" id="submit-btn" disabled>Se connecter</button>
+            <!-- Bouton de connexion désactivé par défaut -->
         </form>
         <a href="/inscription">
             <button>s'inscrire</button>
         </a>
     </div>
-
-    <script>
-// Récupérer le bouton du CapChat
-const capchatBtn = document.getElementById('capchat-btn');
-// Récupérer le bouton de connexion
-const submitBtn = document.getElementById('submit-btn');
-// Récupérer les champs de saisie
-const usernameInput = document.querySelector('input[name="username"]');
-const passwordInput = document.querySelector('input[name="password"]');
-
-// Vérifier si les valeurs des champs existent dans le localStorage
-const storedUsername = localStorage.getItem('storedUsername');
-const storedPassword = localStorage.getItem('storedPassword');
-  // Récupérer le message d'erreur de la requête dans l'URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const errorMessage = urlParams.get('message');
-
-  // Vérifier si un message d'erreur existe
-  if (errorMessage) {
-    // Afficher le message d'erreur dans une alerte
-    alert(errorMessage);
-    // Supprimer le message d'erreur de l'URL
-    history.replaceState(null, '', window.location.pathname);
-
-  }
-if (storedUsername) {
-  usernameInput.value = storedUsername; // Restaurer la valeur du champ "Nom d'utilisateur"
-}
-if (storedPassword) {
-  passwordInput.value = storedPassword; // Restaurer la valeur du champ "Mot de passe"
-}
-// Ajouter un événement au clic sur le bouton du CapChat
-capchatBtn.addEventListener('click', () => {
-
-    // Stocker les valeurs saisies dans le localStorage
-    localStorage.setItem('storedUsername', usernameInput.value);
-    localStorage.setItem('storedPassword', passwordInput.value);
-
-    // Rediriger vers /capchat/general en ajoutant cette partie à l'URL actuelle
-    window.location.href += '/capchat/general';
-});
-
-// Fonction pour activer le bouton de connexion
-function enableSubmitBtn() {
-    submitBtn.disabled = false;
-    submitBtn.classList.add('success'); // Ajouter la classe 'success' pour le style vert
-}
-
-// Vérifier si le CapChat a été réalisé
-function checkCapChat(submitBtnConnexion) {
-    const capchatSuccess = localStorage.getItem('capchatSuccess');
-    console.log(capchatSuccess);
-    if (capchatSuccess === 'true') {
-        console.log("je passe par la ");
-        enableSubmitBtn();
-    } else {
-        submitBtn.disabled = true;
-        submitBtn.classList.remove('success'); // Retirer la classe 'success' pour le style vert
-        if(submitBtnConnexion === true)
-            alert("Veuillez compléter le CapChat pour vous connecter.");
-    }
-}
-
-// Appeler la vérification du CapChat lors de la soumission du formulaire
-document.querySelector('form').addEventListener('submit', (event) => {
-    event.preventDefault(); // Empêcher la soumission du formulaire par défaut
-    submitBtnConnexion = true;
-    checkCapChat(true);
-    localStorage.clear();
-    localStorage.removeItem('storedUsername'); // Supprimer la valeur du champ "Nom d'utilisateur" du localStorage
-    localStorage.removeItem('storedPassword'); // Supprimer la valeur du champ "Mot de passe" du localStorage
-    if(!submitBtn.disabled)
-        event.target.submit(); // Soumettre le formulaire si le CapChat est réalisé correctement
-});
-
-// Vérifier le CapChat lors du chargement de la page
-document.addEventListener('DOMContentLoaded', () => {
-    checkCapChat(false);
-});
-    </script>
+    <script src="/js/connexion.js"></script>
 </body>
+
 </html>

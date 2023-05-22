@@ -1,47 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/index.css">
     <title>CapChat - Page d'accueil</title>
-    <style>
-      body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f0f0f0;
-}
-
-.welcome-container {
-    text-align: center;
-    position: relative;
-}
-
-#background-image {
-    position: absolute;
-    width: 100%;
-    height: 100vh;
-    object-fit: cover;
-    z-index: -1;
-    opacity: 0.5;
-}
-
-.button-container {
-    margin: 20px 0;
-}
-
-button {
-    margin: 10px;
-    padding: 10px;
-    font-size: 20px;
-}
-
-    </style>
 </head>
+
 <body>
     <div class="welcome-container">
         <h1>vous ête sur la page de Bienvenue de CapChat</h1>
@@ -55,43 +21,7 @@ button {
         </select>
         <button id="test-capchat-button">Tester un CapChat</button>
     </div>
-
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-    const selectElement = document.getElementById('url-usage-select');
-    const testButton = document.getElementById('test-capchat-button');
-
-    // Fetch les URLUsage de la base de données
-    fetch('http://localhost:3000/api/urlusage')
-        .then(response => response.json())
-        .then(data => {
-            // Crée une nouvelle option pour chaque URLUsage et l'ajoute au menu déroulant
-            data.forEach(urlUsage => {
-                const option = document.createElement('option');
-                option.value = urlUsage;
-                option.text = urlUsage;
-                selectElement.appendChild(option);
-            });
-        })
-        .catch(error => console.error('Erreur:', error));
-
-    testButton.addEventListener('click', function() {
-        const selectedURLUsage = selectElement.value;
-        window.location.href = '/capchat/' + selectedURLUsage;
-    });
-
-    const connectButton = document.getElementById('connect-button');
-    connectButton.addEventListener('click', function() {
-      localStorage.clear();
-        window.location.href = '/connexion';
-    });
-
-    const registerButton = document.getElementById('register-button');
-    registerButton.addEventListener('click', function() {
-        window.location.href = '/inscription';
-    });
-});
-
-    </script>
+    <script src="/js/index.js"></script>
 </body>
+
 </html>
