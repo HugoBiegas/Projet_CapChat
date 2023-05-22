@@ -128,20 +128,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function handleCapChatSuccess(timerInterval, urlUsage) {
     clearInterval(timerInterval);
+    const storedUsername = localStorage.getItem('storedUsername');
+    const storedPassword = localStorage.getItem('storedPassword');
+
     localStorage.clear();
     localStorage.setItem('capchatSuccess', 'true');
     localStorage.setItem('storedUrlUsage', urlUsage);
+    localStorage.setItem('storedUsername', storedUsername);
+    localStorage.setItem('storedPassword', storedPassword);
 
     if (window.location.pathname.includes('/capchatTheme'))
-      window.location.pathname = window.location.pathname.replace(`/capchatTheme/${urlUsage}`, '');
-    else 
-      window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
+        window.location.pathname = window.location.pathname.replace(`/capchatTheme/${urlUsage}`, '');
+    else
+        window.location.pathname = window.location.pathname.replace(`/capchat/${urlUsage}`, '');
 }
 
 function handleCapChatFailure(timerInterval) {
     clearInterval(timerInterval);
     alert("Vous n'êtes pas un humain !");
+    const storedUsername = localStorage.getItem('storedUsername');
+    const storedPassword = localStorage.getItem('storedPassword');
     localStorage.clear();
     localStorage.setItem('capchatSuccess', 'false');
+    localStorage.setItem('storedUsername', storedUsername);
+    localStorage.setItem('storedPassword', storedPassword);
     history.back();
 }

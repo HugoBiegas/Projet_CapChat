@@ -10,12 +10,8 @@
     <div class="error-container">
         <h1>Erreur 500 - Erreur de serveur</h1>
         <p id="errorMessage"></p>
+        <script src="/js/erreur.js"></script>
 
-        <script>
-            const errorMessage = new URLSearchParams(window.location.search).get('message');
-            const errorMessageElement = document.getElementById('errorMessage');
-            errorMessageElement.textContent = errorMessage;
-        </script>
     </div>
 </body>
 </html>

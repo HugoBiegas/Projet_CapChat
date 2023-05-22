@@ -11,11 +11,8 @@
         <h1>Erreur 403 - Accès refusé</h1>
         <p id="errorMessage"></p>
 
-        <script>
-            const errorMessage = new URLSearchParams(window.location.search).get('message');
-            const errorMessageElement = document.getElementById('errorMessage');
-            errorMessageElement.textContent = errorMessage;
-        </script>
+        <script src="/js/erreur.js"></script>
+
     </div>
 </body>
 </html>

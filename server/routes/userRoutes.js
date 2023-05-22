@@ -133,39 +133,6 @@ router.get('/api/urlusage', authenticateToken, (req, res) => {
 
 
 
-router.get(['*/capchatTheme/:name', '*/capchat/:urlUsage'], (req, res) => {
-  const urlUsage = req.params.urlUsage;
-  const name = req.params.name;
-
-  // Votre code de gestion pour les deux types de routes
-
-  if (name) {
-    // Si le paramètre 'name' est présent, il s'agit d'une route capchatTheme/:name
-    connection.query(`SELECT ID FROM Themes WHERE Name = ?`, [name], function (error, results, fields) {
-      if (error) {
-        return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur Base de Données non accessible')}`);
-      }
-      if (results.length === 0) {
-        return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('Thème non trouvé')}`);
-      }
-    });
-  } else {
-    // Si le paramètre 'urlUsage' est présent, il s'agit d'une route capchat/:urlUsage
-    connection.query(`SELECT ID FROM ImageSets WHERE URLUsage = ?`, [urlUsage], function (error, results, fields) {
-      if (error) {
-        return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur Base de Données non accessible')}`);
-      }
-      if (results.length === 0) {
-        return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('CapChat non trouvé')}`);
-      }
-    });
-  }
-  // Si le thème existe, renvoyez le fichier HTML
-  res.sendFile(path.join(__dirname, '../views', 'capchat.html'));
-});
-
-
-
 router.get('*/modification/:urlUsage', authenticateToken, async (req, res) => {
   try {
     const { urlUsage } = req.params;
@@ -539,7 +506,6 @@ router.post('/api/ajoute/:imageName/:imageSetID', authenticateToken, upload.sing
     let imageName = req.params.imageName;
     const question = req.body.question;
     const imageSetID = req.params.imageSetID;
-    console.log(imageSetID);
 
     // Vérifiez si le nom d'image est déjà utilisé
     const existingImage = await query('SELECT * FROM Images WHERE FilePath = ?', [imageName]);
@@ -570,6 +536,7 @@ router.post('/api/ajoute/:imageName/:imageSetID', authenticateToken, upload.sing
     const destinationDir = question ? 'singuliers' : 'neutres';
     const oldFilePath = req.file.path;
     const newFilePath = path.join(__dirname, '..', 'views', 'image', destinationDir, imageName);
+
     fs.renameSync(oldFilePath, newFilePath);
 
     // Insérer la nouvelle image dans la base de données
@@ -666,6 +633,7 @@ router.post('/api/newCapChat', authenticateToken, upload.array('images'), async 
     const { capchatName, theme, nouveauTheme } = req.body;
     const userID = req.user.id;
     const imagesData = JSON.parse(req.body.imagesData);
+    let imageFile = req.file; // Si vous téléchargez un seul fichier
 
     // Vérifier si le thème est nouveau
     let themeID;
@@ -706,8 +674,6 @@ router.post('/api/newCapChat', authenticateToken, upload.array('images'), async 
         }
       }
 
-
-
       // Déplacer le fichier vers le dossier de destination
       const sourcePath = path.join(__dirname, '..', 'views', 'image', name);
       const destinationPath = path.join(__dirname, '..', 'views', 'image', destinationFolder, newFileName);
@@ -725,9 +691,36 @@ router.post('/api/newCapChat', authenticateToken, upload.array('images'), async 
   }
 });
 
+router.get(['*/capchatTheme/:name', '*/capchat/:urlUsage'], (req, res) => {
+  const urlUsage = req.params.urlUsage;
+  const name = req.params.name;
 
+  if (name) {
+    connection.query(`SELECT ID FROM Themes WHERE Name = ?`, [name], function (error, results, fields) {
+      if (error) {
+        return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur Base de Données non accessible')}`);
+      }
+      if (results.length === 0) {
+        return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('Thème non trouvé')}`);
+      }
 
+      // Si le thème existe, renvoyez le fichier HTML
+      res.sendFile(path.join(__dirname, '../views', 'capchat.html'));
+    });
+  } else {
+    connection.query(`SELECT ID FROM ImageSets WHERE URLUsage = ?`, [urlUsage], function (error, results, fields) {
+      if (error) {
+        return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur Base de Données non accessible')}`);
+      }
+      if (results.length === 0) {
+        return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('CapChat non trouvé')}`);
+      }
 
+      // Si le CapChat existe, renvoyez le fichier HTML
+      res.sendFile(path.join(__dirname, '../views', 'capchat.html'));
+    });
+  }
+});
 
 router.get('*/erreur/:idErreur', (req, res) => {
   const idErreur = req.params.idErreur;

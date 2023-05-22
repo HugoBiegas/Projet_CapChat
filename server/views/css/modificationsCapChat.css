@@ -1,22 +1,28 @@
 body {
     font-family: Arial, sans-serif;
 }
+
 h1 {
     text-align: center;
 }
+
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
 }
-th, td {
+
+th,
+td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: left;
 }
+
 tr:nth-child(even) {
     background-color: #f2f2f2;
 }
+
 .image-thumbnail {
     width: 80px;
 }
@@ -88,26 +94,27 @@ tr:nth-child(even) {
 .file-explorer span {
     margin-left: 10px;
 }
+
 .file-explorer {
-display: flex;
-align-items: center;
-justify-content: space-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .file-explorer-container {
-display: flex;
-align-items: center;
+    display: flex;
+    align-items: center;
 }
 
 .file-info {
-display: flex;
-align-items: center;
+    display: flex;
+    align-items: center;
 }
 
 .file-info label {
-margin-left: 10px;
+    margin-left: 10px;
 }
 
 #imageName {
-margin-left: 10px;
+    margin-left: 10px;
 }

@@ -7,7 +7,9 @@
     border: 1px solid #ccc;
     border-radius: 4px;
 }
-.login-container input[type=text], .login-container input[type=password] {
+
+.login-container input[type=text],
+.login-container input[type=password] {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
@@ -15,6 +17,7 @@
     border: 1px solid #ccc;
     box-sizing: border-box;
 }
+
 .login-container #submit-btn {
     background-color: #4CAF50;
     color: white;
@@ -24,6 +27,7 @@
     cursor: pointer;
     width: 100%;
 }
+
 .hidden {
-display: none;
+    display: none;
 }
