@@ -87,232 +87,218 @@
     </form>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-    // Fetch themes from API
-    fetch('/api/themes')
-        .then(response => response.json())
-        .then(data => {
-            const themeSelect = document.getElementById('theme');
-            data.themes.forEach(theme => {
-                const option = document.createElement('option');
-                option.value = theme.ID;
-                option.textContent = theme.Name;
-                themeSelect.appendChild(option);
-            });
-            const option = document.createElement('option');
-            option.value = 'nouveau';
-            option.textContent = 'nouveaux théme';
-            themeSelect.appendChild(option);
-        })
-        .catch(error => console.error(error));
+document.addEventListener('DOMContentLoaded', () => {
+  // Fetch themes from API
+  fetch('/api/themes')
+    .then(response => response.json())
+    .then(data => {
+      const themeSelect = document.getElementById('theme');
+      data.themes.forEach(theme => {
+        const option = document.createElement('option');
+        option.value = theme.ID;
+        option.textContent = theme.Name;
+        themeSelect.appendChild(option);
+      });
+      const option = document.createElement('option');
+      option.value = 'nouveau';
+      option.textContent = 'nouveaux théme';
+      themeSelect.appendChild(option);
+    })
+    .catch(error => console.error(error));
 });
 
 // Handle new theme display
 const themeSelect = document.getElementById('theme');
 const nouveauThemeContainer = document.getElementById('nouveauThemeContainer');
+const modal = document.getElementById('modal');
+
+function showModal() {
+  modal.style.display = "block";
+}
+
+function hideModal() {
+  modal.style.display = "none";
+}
+
 themeSelect.addEventListener('change', () => {
-    if (themeSelect.value === 'nouveau') {
-        nouveauThemeContainer.style.display = 'block';
-    } else {
-        nouveauThemeContainer.style.display = 'none';
-    }
+  if (themeSelect.value === 'nouveau') {
+    nouveauThemeContainer.style.display = 'block';
+  } else {
+    nouveauThemeContainer.style.display = 'none';
+  }
 });
 
 const imagesInput = document.getElementById('images');
 const imagesTable = document.getElementById('imagesTable');
 const imagesTableBody = imagesTable.querySelector('tbody');
 
-let globalIndex = 0;
-
-// Handle Image/ZIP files selection
-// global variable to store all selected files
-let selectedFiles = [];
-
-const modal = document.getElementById('modal');
-const progress = document.getElementById('progress');
+let selectedFiles = {};
 
 imagesInput.addEventListener('change', event => {
-    // Fetch the files
-    const files = event.target.files;
+  showModal(); // Afficher le spinner
 
-    // add newly selected files to the existing ones
-    selectedFiles = [...selectedFiles, ...files];
+  const files = event.target.files;
+  const fileArray = Array.from(files);
+  let imagePromises = [];
 
-    // Reset the image table
-    imagesTableBody.innerHTML = '';
+  fileArray.forEach(file => {
+    const fileId = Date.now() + Math.random().toString(36).substr(2, 9);
+    selectedFiles[fileId] = file;
 
-    modal.style.display = 'block'; // show the modal
+    if (file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
+      let zipPromise = JSZip.loadAsync(file).then(zip => {
+        const zipPromises = [];
 
-    for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        
-        // Check if the file is a ZIP
-        if (file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
-            JSZip.loadAsync(file).then(zip => {
-                const imagePromises = [];
-
-                zip.forEach((relativePath, zipEntry) => {
-                    if (!zipEntry.dir && ['.png', '.jpg', '.jpeg'].includes(relativePath.slice(-4))) {
-                        const imagePromise = zipEntry.async('blob').then(zipFile => {
-                            const fileName = relativePath.split('/').pop();
-                            addImageToTable(zipFile, fileName, globalIndex);
-                            globalIndex += 1;
-                        });
-
-                        imagePromises.push(imagePromise);
-                    }
-                });
-
-                Promise.all(imagePromises)
-                    .then(() => {
-                        // hide the modal when all files have been processed
-                        if (i >= selectedFiles.length - 1) {
-                            modal.style.display = 'none';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error while adding images from ZIP:', error);
-                    });
-            })
-            .catch(error => {
-                console.error('Error while loading ZIP:', error);
+        zip.forEach((relativePath, zipEntry) => {
+          if (!zipEntry.dir && ['.png', '.jpg', '.jpeg'].includes(relativePath.slice(-4))) {
+            const imagePromise = zipEntry.async('blob').then(zipFile => {
+              const fileName = relativePath.split('/').pop();
+              addImageToTable(zipFile, fileName, fileId);
             });
-        } else if (['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
-            setTimeout(() => {
-                addImageToTable(file, file.name, globalIndex);
-                globalIndex += 1;
 
-                // hide the modal when all files have been processed
-                if (i >= selectedFiles.length - 1) {
-                    modal.style.display = 'none';
-                }
-            }, 1000); // ici, le délai est de 2 secondes, mais vous pouvez l'ajuster en fonction de vos besoins
+            zipPromises.push(imagePromise);
+          }
+        });
 
-        }
+        return Promise.all(zipPromises)
+          .catch(error => {
+            console.error('Error while adding images from ZIP:', error);
+          });
+      })
+        .catch(error => {
+          console.error('Error while loading ZIP:', error);
+        });
+
+      imagePromises.push(zipPromise);
+    } else if (['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) {
+      let imagePromise = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          addImageToTable(file, file.name, fileId);
+          resolve();
+        }, 1000);
+      });
+
+      imagePromises.push(imagePromise);
     }
-    imagesTable.style.display = 'table';
-});
-
-
-
-
-// Function to add image to table
-function addImageToTable(file, fileName, index) {
-    // Create a FileReader to read the contents of the file
-    const reader = new FileReader();
-    reader.onload = () => {
-        // Create the image preview element
-        const imagePreview = document.createElement('img');
-        imagePreview.src = reader.result;
-        imagePreview.width = 100;
-        imagePreview.height = 100;
-
-        // Create the input elements for the file name and question
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.name = `image_name_${index}`;
-        nameInput.value = fileName;
-
-        const questionInput = document.createElement('input');
-        questionInput.type = 'text';
-        questionInput.name = `image_question_${index}`;
-
-        // Create the delete button
-        const deleteButton = document.createElement('button');
-        deleteButton.type = 'button';
-        deleteButton.textContent = 'Supprimer';
-        deleteButton.addEventListener('click', () => {
-            deleteImageFromTable(deleteButton);
-        });
-        deleteButton.setAttribute('data-index', index);
-
-        // Create the table row and append all the elements
-        const row = document.createElement('tr');
-        [imagePreview, nameInput, questionInput, deleteButton].forEach(element => {
-            const cell = document.createElement('td');
-            cell.appendChild(element);
-            row.appendChild(cell);
-        });
-
-        // Append the row to the table body
-        imagesTableBody.appendChild(row);
-    };
-    reader.readAsDataURL(file);
-}
-
-// Function to delete image from table
-function deleteImageFromTable(deleteButton) {
-    const row = deleteButton.closest('tr'); // Get the parent row of the delete button
-    const index = parseInt(deleteButton.getAttribute('data-index')); // Get the index from the data-index attribute
-
-    row.remove(); // Remove the row from the table
-
-    // Update the indexes of the remaining images
-    const remainingRows = Array.from(imagesTableBody.querySelectorAll('tr'));
-    remainingRows.forEach((row, i) => {
-        const deleteButton = row.querySelector('button');
-        deleteButton.setAttribute('data-index', i);
-    });
-}
-
-const creationForm = document.getElementById('creationForm');
-creationForm.addEventListener('submit', event => {
-  event.preventDefault();
-
-  const formData = new FormData(creationForm);
-  const requestBody = {};
-
-  // Extract field values
-  for (let pair of formData.entries()) {
-    const [name, value] = pair;
-    requestBody[name] = value;
-  }
-
-  // Extract image details
-  const images = [];
-  const rows = Array.from(imagesTableBody.querySelectorAll('tr'));
-  rows.forEach((row, index) => {
-    const nameInput = row.querySelector('input[name^="image_name_"]');
-    const questionInput = row.querySelector('input[name^="image_question_"]');
-    const image = {
-      name: nameInput.value,
-      question: questionInput.value
-    };
-    images.push(image);
   });
 
-  // Check if there is at least one image with a question and 7 images without a question
-  const questionImages = images.filter(image => image.question);
-  const nonQuestionImages = images.filter(image => !image.question);
+  Promise.all(imagePromises).then(() => {
+    hideModal(); // Cacher le spinner une fois que toutes les images ont été chargées
+    imagesTable.style.display = 'table';
+  });
+});
 
-  if (questionImages.length < 1 || nonQuestionImages.length < 7) {
-    alert('Veuillez fournir au moins une image avec une question et 7 images sans question.');
-    return;
+function addImageToTable(file, fileName, fileId) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const imagePreview = document.createElement('img');
+    imagePreview.src = reader.result;
+    imagePreview.width = 100;
+    imagePreview.height = 100;
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.name = `image_name_${fileId}`;
+    nameInput.value = fileName;
+
+    const questionInput = document.createElement('input');
+    questionInput.type = 'text';
+    questionInput.name = `image_question_${fileId}`;
+    questionInput.addEventListener('change', () => {
+      selectedFiles[fileId].question = questionInput.value;
+    });
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.textContent = 'Supprimer';
+    deleteButton.setAttribute('data-file-id', fileId);
+    deleteButton.addEventListener('click', () => {
+      deleteImageFromTable(deleteButton);
+    });
+
+    const row = document.createElement('tr');
+    const imageCell = document.createElement('td');
+    const nameCell = document.createElement('td');
+    const questionCell = document.createElement('td');
+    const deleteCell = document.createElement('td');
+    imageCell.appendChild(imagePreview);
+    nameCell.appendChild(nameInput);
+    questionCell.appendChild(questionInput);
+    deleteCell.appendChild(deleteButton);
+    row.appendChild(imageCell);
+    row.appendChild(nameCell);
+    row.appendChild(questionCell);
+    row.appendChild(deleteCell);
+    imagesTableBody.appendChild(row);
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteImageFromTable(deleteButton) {
+  const row = deleteButton.closest('tr');
+  const fileId = deleteButton.getAttribute('data-file-id');
+
+  row.remove();
+
+  delete selectedFiles[fileId];
+
+  const remainingRows = Array.from(imagesTableBody.querySelectorAll('tr'));
+  remainingRows.forEach((row, i) => {
+    const deleteButton = row.querySelector('button');
+    deleteButton.setAttribute('data-index', i);
+  });
+}
+
+document.getElementById('creationForm').addEventListener('submit', event => {
+  event.preventDefault();
+
+  const formData = new FormData(event.target);
+
+  const imagesData = [];
+
+  for (const [fileId, file] of Object.entries(selectedFiles)) {
+    formData.append('images', file);
+    if (file.question) {
+      imagesData.push({ name: file.name, question: file.question });
+    } else {
+      imagesData.push({ name: file.name, question: "" });
+    }
   }
 
-  requestBody.images = images;
+  const imagesWithoutQuestions = Object.values(selectedFiles).filter(file => !file.question).length;
+  const imagesWithQuestions = Object.values(selectedFiles).filter(file => file.question).length;
 
-  // Send image to the server
+  //if (imagesWithoutQuestions < 7 || imagesWithQuestions < 1) {
+  //  alert("Vous devez avoir au moins 7 images sans question et 1 image avec question avant de soumettre.");
+  //  return;
+  //}
+
+  formData.append('imagesData', JSON.stringify(imagesData));
+      // Afficher toutes les paires clé/valeur dans formData
+  for (let pair of formData.entries()) {
+    console.log(pair[0]+ ', '+ pair[1]); 
+  }
+
+
+  showModal(); // Afficher le spinner lors de l'envoi de la demande
+
   fetch('/api/newCapChat', {
     method: 'POST',
-    body: JSON.stringify(requestBody),
-    headers: {
-      'Content-Type': 'application/json'
-    }
+    body: formData,
   })
     .then(response => response.json())
     .then(data => {
-      // Handle server response
-      if (data.success) {
-        alert('CapChat créé avec succès !');
-        creationForm.reset();
-        imagesTableBody.innerHTML = '';
-        imagesTable.style.display = 'none';
-      } else {
-        alert('Erreur lors de la création du CapChat.');
-      }
+      console.log(data);
+    })
+    .catch(error => {
+      console.error('Erreur:', error);
+    })
+    .finally(() => {
+      hideModal(); // Cacher le spinner une fois que la réponse est reçue
     });
 });
-    </script>
+
+        </script>
+        
 </body>
 </html>
