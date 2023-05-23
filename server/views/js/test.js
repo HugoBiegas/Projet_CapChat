@@ -28,14 +28,13 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .then(data => {
       imageSetID = data.imagesNeutres[0].ImageSetID;
-      console.log(imageSetID);
       const imagesTable = document.querySelector("#imagesTable");
       data.imagesNeutres.forEach(image => {
-        const row = createTableRow(image.FilePath, image.Question);
+        const row = createTableRow(image.FilePath, image.Question, urlUsage);
         imagesTable.appendChild(row);
       });
       data.imageSinguliere.forEach(image => {
-        const row = createTableRow(image.FilePath, image.Question);
+        const row = createTableRow(image.FilePath, image.Question, urlUsage);
         imagesTable.appendChild(row);
       });
     })
@@ -43,12 +42,14 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error('Erreur:', error);
     });
 });
-function createTableRow(imagePath, question) {
+
+function createTableRow(imagePath, question, urlUsage) {
   const row = document.createElement("tr");
 
   const imageCell = document.createElement("td");
   const imageThumbnail = document.createElement("img");
-  imageThumbnail.src = `/views/image/${question ? 'singuliers' : 'neutres'}/${imagePath}`;
+  console.log(urlUsage);
+  imageThumbnail.src = `/views/image/${question ? 'singuliers' : 'neutres'}/${urlUsage}/${imagePath}`;
   imageThumbnail.alt = imagePath;
   imageThumbnail.classList.add("image-thumbnail");
   imageCell.appendChild(imageThumbnail);
@@ -176,8 +177,7 @@ function updateImage(imagePath, newImagePath, newQuestion, imageFile) {
 
       console.log(response.data.message);
       location.reload(true);
-      // Mettre à jour l'affichage si nécessaire
-      // ...
+
     })
     .catch(error => {
       console.error('Erreur:', error);
@@ -235,8 +235,7 @@ document.getElementById("addValidateButton").addEventListener("click", function 
       document.getElementById("addImageModal").style.display = "none";
 
       location.reload(true);
-      // Mettre à jour l'affichage si nécessaire
-      // ...
+
     })
     .catch(error => {
       console.error('Erreur:', error);

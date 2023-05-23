@@ -12,7 +12,7 @@ const multer = require('multer');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '..', 'views', 'image')); // Spécifiez le répertoire de destination des fichiers
+    cb(null, path.join(__dirname, '..', 'views', 'image', 'temp')); // Spécifiez le répertoire de destination des fichiers
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname); // Utilisez le nom d'origine du fichier
@@ -46,11 +46,11 @@ router.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'index.html'));
 });
 
-router.get('/creationCapChat', (req, res) => {
+router.get('/creationCapChat', authenticateToken, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'creationCapChat.html'));
 });
 
-router.get('/information', (req, res) => {
+router.get('/information', authenticateToken, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'information.html'));
 });
 
@@ -72,12 +72,12 @@ router.get('/api/capchat/:urlUsage', (req, res) => {
       return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('CapChat non trouvé')}`);
     }
     const capchat = results[0];
-    connection.query(`SELECT FilePath FROM Images WHERE ImageSetID = ? AND Question IS NULL ORDER BY RAND() LIMIT 7`, [capchat.ID], function (error, results, fields) {
+    connection.query(`SELECT FilePath FROM Images WHERE ImageSetID = ? AND Question = '' ORDER BY RAND() LIMIT 7`, [capchat.ID], function (error, results, fields) {
       if (error) {
         return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('error Base de Donnée non accésible')}`);
       }
       const imagesNeutres = results;
-      connection.query(`SELECT FilePath, Question FROM Images WHERE ImageSetID = ? AND Question IS NOT NULL ORDER BY RAND() LIMIT 1`, [capchat.ID], function (error, results, fields) {
+      connection.query(`SELECT FilePath, Question FROM Images WHERE ImageSetID = ? AND Question != '' ORDER BY RAND() LIMIT 1`, [capchat.ID], function (error, results, fields) {
         if (error) {
           return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('error Base de Donnée non accésible')}`);
         }
@@ -88,35 +88,40 @@ router.get('/api/capchat/:urlUsage', (req, res) => {
   });
 });
 
-router.get('/api/capChatTheme/:name', (req, res) => {
-  const themeName = req.params.name;
-  connection.query(`SELECT ImageSets.ID, ImageSets.URLUsage FROM ImageSets LEFT JOIN Themes ON ImageSets.ThemeID = Themes.ID WHERE Themes.Name = ?`, [themeName], function (error, results, fields) {
-    if (error) {
-      return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur de base de données')}`);
-    }
-    if (results.length === 0) {
+router.get('/api/capChatTheme/:name', async (req, res) => {
+  try {
+    const themeName = req.params.name;
+    const themeQuery = `SELECT ImageSets.ID, ImageSets.URLUsage FROM ImageSets LEFT JOIN Themes ON ImageSets.ThemeID = Themes.ID WHERE Themes.Name = ?`;
+    const imageSets = await query(themeQuery, [themeName]);
+
+    if (imageSets.length === 0) {
       return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('Thème non trouvé')}`);
     }
 
-    const imageSets = results;
     const imageSetIDs = imageSets.map(imageSet => imageSet.ID);
+    const imagesNeutresQuery = `
+    SELECT Images.FilePath, ImageSets.URLUsage FROM Images 
+    JOIN ImageSets ON Images.ImageSetID = ImageSets.ID
+    WHERE Images.ImageSetID IN (?)
+    AND Images.Question = ''
+    ORDER BY RAND()
+    LIMIT 7
+    `;
+    const imagesNeutres = await query(imagesNeutresQuery, [imageSetIDs]);
 
-    connection.query(`SELECT FilePath FROM Images WHERE ImageSetID IN (?) AND Question IS NULL ORDER BY RAND() LIMIT 7`, [imageSetIDs], function (error, results, fields) {
-      if (error) {
-        return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur de base de données')}`);
-      }
-      const imagesNeutres = results;
+    const imageSinguliereQuery = `
+    SELECT ImageSets.URLUsage, Images.FilePath, Images.Question FROM ImageSets 
+    LEFT JOIN Images ON Images.ImageSetID = ImageSets.ID 
+    WHERE ImageSets.ThemeID IN (SELECT ID FROM Themes WHERE Themes.Name = ?) 
+    AND Images.Question != '' 
+    ORDER BY RAND() 
+    LIMIT 1`;
+    const imageSinguliere = await query(imageSinguliereQuery, [themeName]);
 
-      connection.query(`SELECT ImageSets.URLUsage, Images.FilePath, Images.Question FROM ImageSets LEFT JOIN Images ON Images.ImageSetID = ImageSets.ID WHERE ImageSets.ThemeID IN (SELECT ID FROM Themes WHERE Themes.Name = ?) AND Images.Question IS NOT NULL ORDER BY RAND() LIMIT 1`, [themeName], function (error, results, fields) {
-        if (error) {
-          return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur de base de données')}`);
-        }
-        const imageSinguliere = results;
-
-        res.json({ imagesNeutres, imageSinguliere });
-      });
-    });
-  });
+    res.json({ imagesNeutres, imageSinguliere });
+  } catch (error) {
+    return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur de base de données')}`);
+  }
 });
 
 router.get('/api/urlusage', authenticateToken, (req, res) => {
@@ -172,8 +177,8 @@ router.get('/api/capchatall/:urlUsage', authenticateToken, async (req, res) => {
       return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('CapChat non trouvé')}`);
     }
 
-    const imagesNeutres = await query('SELECT FilePath,ImageSetID FROM Images WHERE ImageSetID = ? AND Question IS NULL', [capchat[0].ID]);
-    const imageSinguliere = await query('SELECT FilePath,ImageSetID,Question FROM Images WHERE ImageSetID = ? AND Question IS NOT NULL', [capchat[0].ID]);
+    const imagesNeutres = await query("SELECT FilePath,ImageSetID FROM Images WHERE ImageSetID = ? AND Question ='' ", [capchat[0].ID]);
+    const imageSinguliere = await query("SELECT FilePath,ImageSetID,Question FROM Images WHERE ImageSetID = ? AND Question != ''", [capchat[0].ID]);
 
     res.json({ imagesNeutres, imageSinguliere });
   } catch (error) {
@@ -197,6 +202,7 @@ router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('ima
 
     const imageID = imageData[0].ID;
     const oldQuestion = imageData[0].Question;
+    const imageSetID = imageData[0].ImageSetID;
 
     if (!imageFile && newImagePath && newImagePath !== imagePath) {
       const existingImage = await query('SELECT ID FROM Images WHERE FilePath = ?', [newImagePath]);
@@ -221,10 +227,11 @@ router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('ima
 
     const oldFolder = oldQuestion ? "singuliers" : "neutres";
     const newFolder = newQuestion ? "singuliers" : "neutres";
+    const nomImageSet = await query('SELECT URLUsage FROM imagesets WHERE ID = ?', [imageSetID]);
 
     //mettre la métode pour déplacer l'image si l'utilisateur a ajouter une iamge
     if (imageFile) {
-      const newFolderPath = path.join(__dirname, '..', 'views', 'image', newFolder);
+      const newFolderPath = path.join(__dirname, '..', 'views', 'image', newFolder, nomImageSet);
       const newFilePath = path.join(newFolderPath, newImagePath);
 
       fs.rename(imageFile.path, newFilePath, function (err) {
@@ -239,8 +246,8 @@ router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('ima
 
     //si l'ancier fichier est différenet du nouveaux
     if (oldFolder !== newFolder) {
-      const oldFolderPath = path.join(__dirname, '..', 'views', 'image', oldFolder, imagePath);
-      const newFolderPath = path.join(__dirname, '..', 'views', 'image', newFolder, newImagePath);
+      const oldFolderPath = path.join(__dirname, '..', 'views', 'image', oldFolder, nomImageSet, imagePath);
+      const newFolderPath = path.join(__dirname, '..', 'views', 'image', newFolder, nomImageSet, newImagePath);
       //si il n'y a pas de nouvelle image on déplace l'image si non on la suprime
       if (!imageFile) {
         fs.renameSync(oldFolderPath, newFolderPath, function (err) {
@@ -468,16 +475,19 @@ router.delete('/api/deleteimage/:imagePath', authenticateToken, async (req, res)
 
     // Vérifier si l'image a une question
     const hasQuestion = image[0].Question !== null;
+    let imageSetID;
 
     if (hasQuestion) {
       // Vérifier combien d'images singulières restent
-      const singularImages = await query('SELECT ID FROM Images WHERE Question IS NOT NULL');
+      const singularImages = await query('SELECT ID,ImageSetID FROM Images WHERE Question IS NOT NULL');
+      imageSetID = singularImages[0].ImageSetID;
       if (singularImages.length <= 1) {
         return res.status(400).json({ message: 'Vous devez conserver au moins une image singulière pour le CapChat' });
       }
     } else {
       // Vérifier combien d'images neutres restent
-      const neutralImages = await query('SELECT ID FROM Images WHERE Question IS NULL');
+      const neutralImages = await query('SELECT ID,ImageSetID FROM Images WHERE Question IS NULL');
+      imageSetID = neutralImages[0].ImageSetID;
       if (neutralImages.length <= 7) {
         return res.status(400).json({ message: 'Vous devez avoir au moins 7 images neutres pour le CapChat' });
       }
@@ -488,9 +498,9 @@ router.delete('/api/deleteimage/:imagePath', authenticateToken, async (req, res)
 
     // Déterminer le dossier où se trouve l'image en fonction de la présence ou non d'une question
     const imageFolder = hasQuestion ? 'singuliers' : 'neutres';
-
+    const nomImageSet = await query('SELECT URLUsage FROM imagesets WHERE ID = ?', [imageSetID]);
     // Supprimer l'image du système de fichiers (assurez-vous d'adapter le chemin d'accès selon votre configuration)
-    const filePath = path.join(__dirname, '..', 'views', 'image', imageFolder, imagePath);
+    const filePath = path.join(__dirname, '..', 'views', 'image', imageFolder, nomImageSet, imagePath);
     fs.unlinkSync(filePath);
 
     return res.status(200).json({ message: 'Image supprimée avec succès' });
@@ -535,7 +545,9 @@ router.post('/api/ajoute/:imageName/:imageSetID', authenticateToken, upload.sing
     // Déplacez l'image téléchargée vers le bon dossier en fonction de la présence de la question
     const destinationDir = question ? 'singuliers' : 'neutres';
     const oldFilePath = req.file.path;
-    const newFilePath = path.join(__dirname, '..', 'views', 'image', destinationDir, imageName);
+    const nomImageSet = await query('SELECT URLUsage FROM imagesets WHERE ID = ?', [imageSetID]);
+
+    const newFilePath = path.join(__dirname, '..', 'views', 'image', destinationDir, nomImageSet, imageName);
 
     fs.renameSync(oldFilePath, newFilePath);
 
@@ -598,10 +610,12 @@ router.post('/api/adcapchat', upload.array('images'), async (req, res) => {
     const tempPath = req.files[index].path;
     let newPath;
 
+    const nomImageSet = await query('SELECT URLUsage FROM imagesets WHERE ID = ?', [imageSetID]);
+
     if (image.question) {
-      newPath = path.join(__dirname, 'singular', `${image.fileName}.jpg`);
+      newPath = path.join(__dirname, 'singular', nomImageSet, `${image.fileName}.jpg`);
     } else {
-      newPath = path.join(__dirname, 'neutral', `${image.fileName}.jpg`);
+      newPath = path.join(__dirname, 'neutral', nomImageSet, `${image.fileName}.jpg`);
     }
 
     await moveFile(tempPath, newPath);
@@ -633,7 +647,11 @@ router.post('/api/newCapChat', authenticateToken, upload.array('images'), async 
     const { capchatName, theme, nouveauTheme } = req.body;
     const userID = req.user.id;
     const imagesData = JSON.parse(req.body.imagesData);
-    let imageFile = req.file; // Si vous téléchargez un seul fichier
+    let imageFiles = req.files; // Si vous téléchargez un seul fichier
+
+    const nomValideCapChat = await query('SELECT ID FROM imagesets WHERE URLUsage = ?', [capchatName]);
+    if (nomValideCapChat.length >= 1)
+      return res.status(400).json({ error: 'le nom de capChat est dejat utiliser' });
 
     // Vérifier si le thème est nouveau
     let themeID;
@@ -652,6 +670,21 @@ router.post('/api/newCapChat', authenticateToken, upload.array('images'), async 
     const capChatResult = await query(insertCapChatQuery, [userID, themeID, capchatName]);
     const imageSetID = capChatResult.insertId;
 
+    const nomImageSet = (await query('SELECT URLUsage FROM imagesets WHERE ID = ?', [imageSetID]))[0].URLUsage;
+
+    // Créer le dossier dans 'neutres' et 'singuliers' si il n'existe pas déjà
+    const neutresPath = path.join(__dirname, '..', 'views', 'image', 'neutres', nomImageSet);
+    const singuliersPath = path.join(__dirname, '..', 'views', 'image', 'singuliers', nomImageSet);
+
+    if (!fs.existsSync(neutresPath) && !fs.existsSync(singuliersPath)) {
+      fs.mkdirSync(neutresPath, { recursive: true });
+      fs.mkdirSync(singuliersPath, { recursive: true });
+    } else {
+      return res.status(400).json({ error: 'le nom de capChat est dejat utiliser' });
+    }
+
+
+
     // Parcourir les données des images et les enregistrer dans la base de données
     for (let i = 0; i < imagesData.length; i++) {
       const { name, question } = imagesData[i];
@@ -661,22 +694,23 @@ router.post('/api/newCapChat', authenticateToken, upload.array('images'), async 
 
       // Déterminer le dossier de destination en fonction de la présence d'une question
       const destinationFolder = isQuestionImage ? 'singuliers' : 'neutres';
-
       // Vérifier l'extension du fichier
+
       let newFileName = name;
+      const imageFile = imageFiles[i]; // Obtenez le fichier correspondant
       const extension = path.extname(newFileName);
-      if (!extension || (extension !== '.png' && extension !== '.jpg' && extension !== '.jpeg')) {
+      if (!extension || (extension !== '.png' && extension !== '.jpg')) {
         const originalExtension = path.extname(imageFile.originalname);
-        if (originalExtension === '.png' || originalExtension === '.jpg' || originalExtension === '.jpeg') {
+        if (originalExtension === '.png' || originalExtension === '.jpg') {
           newFileName = newFileName + originalExtension;
         } else {
-          return res.status(400).json({ error: 'Le fichier doit être une image PNG ou JPEG' });
+          return res.status(400).json({ error: 'Le fichier doit être une image PNG ou JPG' });
         }
       }
 
       // Déplacer le fichier vers le dossier de destination
-      const sourcePath = path.join(__dirname, '..', 'views', 'image', name);
-      const destinationPath = path.join(__dirname, '..', 'views', 'image', destinationFolder, newFileName);
+      const sourcePath = path.join(__dirname, '..', 'views', 'image', 'temp', name);
+      const destinationPath = path.join(__dirname, '..', 'views', 'image', destinationFolder, nomImageSet, newFileName);
       fs.renameSync(sourcePath, destinationPath);
 
       // Insérer les informations de l'image dans la base de données

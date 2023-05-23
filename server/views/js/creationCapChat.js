@@ -128,7 +128,7 @@ function addImageToTable(file, fileName, fileId) {
   const reader = new FileReader();
   reader.onload = () => {
     const imagePreview = document.createElement('img');
-    imagePreview.src = reader.result;
+    imagePreview.src = URL.createObjectURL(file);
     imagePreview.width = 100;
     imagePreview.height = 100;
 
@@ -192,7 +192,7 @@ function deleteImageFromTable(deleteButton) {
   const remainingRows = Array.from(imagesTableBody.querySelectorAll('tr'));
   remainingRows.forEach((row, i) => {
     const deleteButton = row.querySelector('button');
-    deleteButton.setAttribute('data-index', i);
+    deleteButton.setAttribute('data-file-id', i);
   });
 }
 
@@ -220,7 +220,7 @@ document.getElementById('creationForm').addEventListener('submit', event => {
 
     fileNameList.push(fileName);
 
-    const newFile = new File([file], fileName, { type: file.type });
+    const newFile = new File([file.file], fileName, { type: file.file.type });
 
     formData.append('images', newFile);
 

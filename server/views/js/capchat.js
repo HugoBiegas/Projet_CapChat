@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then((data) => {
             const imageContainer = document.getElementById('image-container');
             const question = document.getElementById('question');
-
+            console.log(data);
             const imageSinguliere = data.imageSinguliere[0];
             question.innerText = imageSinguliere.Question;
 
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             images.forEach((image, index) => {
                 const imgElement = document.createElement('img');
-                imgElement.src = `/views/image/${image === imageSinguliere ? 'singuliers' : 'neutres'}/${image.FilePath}`;
+                imgElement.src = `/views/image/${image === imageSinguliere ? 'singuliers' : 'neutres'}/${image.URLUsage}/${image.FilePath}`;
                 imgElement.classList.add('capchat-image');
                 imgElement.dataset.isSinguliere = (image === imageSinguliere).toString();
                 imgElement.addEventListener('click', () => handleImageClick(index));
