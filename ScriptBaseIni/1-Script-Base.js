@@ -6,7 +6,7 @@ const con = mysql.createConnection({
   password: ""
 });
 
-con.connect(function(err) {
+con.connect(function (err) {
   if (err) throw err;
   console.log("Connected!");
 
@@ -18,13 +18,14 @@ con.connect(function(err) {
       if (err) throw err;
       console.log("Database created");
 
-      con.changeUser({database: 'CapChat'}, function(err) {
+      con.changeUser({ database: 'CapChat' }, function (err) {
         if (err) throw err;
 
         const tables = [
           `CREATE TABLE Users (
             ID INT AUTO_INCREMENT,
             Username VARCHAR(255) NOT NULL,
+            Email VARCHAR(255) NOT NULL,
             Password VARCHAR(255) NOT NULL,
             NameArtiste VARCHAR(255) DEFAULT NULL,
             PRIMARY KEY (ID)
@@ -32,6 +33,7 @@ con.connect(function(err) {
           `CREATE TABLE Token (
             ID INT AUTO_INCREMENT,
             UserID INT,
+            PaswordToken boolean DEFAULT false,
             TokenValue VARCHAR(255) NOT NULL,
             Expired DATE,
             PRIMARY KEY (ID),
@@ -61,14 +63,14 @@ con.connect(function(err) {
           );`
         ];
 
-        tables.forEach(function(query) {
+        tables.forEach(function (query) {
           con.query(query, function (err, result) {
             if (err) throw err;
             console.log("Table created");
           });
         });
 
-        con.end(function(err) {
+        con.end(function (err) {
           if (err) throw err;
           console.log('Connection ended');
         });

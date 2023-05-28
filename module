@@ -1,1 +1,1 @@
-/*npm install mysql bcrypt crypto fs express multer path readline body-parser cors axios jsonwebtoken cookie-parser sharp jszip*/
+/*npm install mysql bcrypt crypto fs express multer path readline body-parser cors axios jsonwebtoken cookie-parser sharp jszip nodemailer*/

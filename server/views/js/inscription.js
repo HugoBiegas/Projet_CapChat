@@ -41,6 +41,7 @@ passwordInput.addEventListener('input', function (e) {
         numberCriteria.style.color = 'red';
     }
 });
+
 document.getElementById('inscriptionForm').addEventListener('submit', function (event) {
     event.preventDefault();
 
@@ -49,12 +50,14 @@ document.getElementById('inscriptionForm').addEventListener('submit', function (
         body: JSON.stringify({
             username: document.getElementById('username').value,
             password: document.getElementById('password').value,
-            NameArtiste: document.getElementById('NameArtiste').value
+            NameArtiste: document.getElementById('NameArtiste').value,
+            email: document.getElementById('email').value
         }),
         headers: {
             'Content-Type': 'application/json'
         }
-    }).then(response => response.json())
+    })
+        .then(response => response.json())
         .then(data => {
             if (data.message === 'Inscription réussie') {
                 window.location.href = '/connexion';

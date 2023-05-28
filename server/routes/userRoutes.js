@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const util = require('util');
 const multer = require('multer');
+const nodemailer = require('nodemailer');
 
 
 const storage = multer.diskStorage({
@@ -71,18 +72,28 @@ router.get('/api/capchat/:urlUsage', (req, res) => {
     if (results.length === 0) {
       return res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('CapChat non trouvé')}`);
     }
-    const capchat = results[0];
-    connection.query(`SELECT FilePath FROM Images WHERE ImageSetID = ? AND Question = '' ORDER BY RAND() LIMIT 7`, [capchat.ID], function (error, results, fields) {
+
+    connection.query(`SELECT Images.FilePath, ImageSets.URLUsage FROM Images 
+    JOIN ImageSets ON Images.ImageSetID = ImageSets.ID
+    WHERE ImageSets.URLUsage = ? AND Images.Question = ''
+    ORDER BY RAND()
+    LIMIT 7`, [urlUsage], function (error, results, fields) {
       if (error) {
         return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('error Base de Donnée non accésible')}`);
       }
       const imagesNeutres = results;
-      connection.query(`SELECT FilePath, Question FROM Images WHERE ImageSetID = ? AND Question != '' ORDER BY RAND() LIMIT 1`, [capchat.ID], function (error, results, fields) {
+
+      connection.query(`SELECT ImageSets.URLUsage, Images.FilePath, Images.Question FROM ImageSets 
+      LEFT JOIN Images ON Images.ImageSetID = ImageSets.ID
+      WHERE ImageSets.URLUsage = ? AND Images.Question != ''
+      ORDER BY RAND()
+      LIMIT 1`, [urlUsage], function (error, results, fields) {
         if (error) {
           return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('error Base de Donnée non accésible')}`);
         }
         const imageSinguliere = results;
         res.json({ imagesNeutres, imageSinguliere });
+
       });
     });
   });
@@ -293,50 +304,51 @@ router.post('/api/updateimage/:imagePath', authenticateToken, upload.single('ima
 
 router.post('/inscription', async (req, res) => {
   try {
-    const { username, password, NameArtiste } = req.body;
+    const { username, password, NameArtiste, email } = req.body;
 
     // Vérification des champs
-    if (!username || !password) {
+    if (!username || !password || !email) {
       return res.json({ message: "Veuillez remplir tous les champs obligatoires." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    let query;
+    let queryStr;
     let values;
 
-    if (NameArtiste) {
-      query = 'SELECT Username FROM Users WHERE Username = ? OR NameArtiste = ?';
-      values = [username, NameArtiste];
-    } else {
-      query = 'SELECT Username FROM Users WHERE Username = ?';
-      values = [username];
-    }
+    queryStr = 'SELECT Username, Email FROM Users WHERE Username = ? OR Email = ?';
+    values = [username, email];
 
-    connection.query(query, values, function (error, results, fields) {
-      if (error) {
+    query(queryStr, values)
+      .then((results) => {
+        if (results.length > 0) {
+          let message;
+          if (results[0].Username === username) {
+            message = "Nom d'utilisateur déjà pris";
+          } else {
+            message = "Email déjà utilisé";
+          }
+          return res.json({ message: message });
+        } else {
+          query('INSERT INTO Users (Username, Password, NameArtiste, Email) VALUES (?, ?, ?, ?)', [username, hashedPassword, NameArtiste, email])
+            .then(() => {
+              return res.json({ message: 'Inscription réussie' });
+            })
+            .catch((error) => {
+              console.error(error);
+              return res.json({ message: 'Erreur interne' });
+            });
+        }
+      })
+      .catch((error) => {
         console.error(error);
         return res.json({ message: 'Erreur interne' });
-      } else if (results.length > 0) {
-        let message = results[0].Username === username ? "Nom d'utilisateur déjà pris" : "Nom d'artiste déjà pris";
-        return res.json({ message: message });
-      } else {
-        connection.query('INSERT INTO Users (Username, Password, NameArtiste) VALUES (?, ?, ?)', [username, hashedPassword, NameArtiste], function (error, results, fields) {
-          if (error) {
-            console.error(error);
-            return res.json({ message: 'Erreur interne' });
-          } else {
-            return res.json({ message: 'Inscription réussie' });
-          }
-        });
-      }
-    });
+      });
 
   } catch (error) {
     console.error(error);
     return res.json({ message: 'Erreur interne' });
   }
 });
-
 
 
 
@@ -363,11 +375,14 @@ function authenticateToken(req, res, next) {
     req.user = decoded;
 
     // Vérifier que le token existe et n'est pas expiré dans la base de données
-    connection.query('SELECT ID FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
+    connection.query('SELECT ID,PaswordToken FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
       if (error) {
         console.error(error);
         return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur interne')}`);
       }
+      if (results[0].PaswordToken === 1)
+        return res.redirect(req.originalUrl + `/erreur/401?message=${encodeURIComponent('Authentification invalide. Vous ne pouvez pas vous connecter avec un token de réinitialisations de passeword')}`);
+
 
       if (results.length === 0) {
         connection.query('SELECT ID FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired < NOW()', [decoded.id, token], (error, results, fields) => {
@@ -755,6 +770,117 @@ router.get(['*/capchatTheme/:name', '*/capchat/:urlUsage'], (req, res) => {
     });
   }
 });
+function createPasswordResetToken(userID, tokenValue, expiredDate) {
+  return new Promise((resolve, reject) => {
+    const query = 'INSERT INTO Token (UserID, PaswordToken, TokenValue, Expired) VALUES (?, ?, ?, ?)';
+    const paswordToken = 1; // Valeur de PaswordToken à 1
+
+    connection.query(query, [userID, paswordToken, tokenValue, expiredDate], (error, results, fields) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(results);
+      }
+    });
+  });
+}
+// Route pour la demande de réinitialisation du mot de passe
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Vérifier si l'e-mail existe dans la base de données
+    const query = 'SELECT ID, Email FROM Users WHERE Email = ?';
+    connection.query(query, [email], async (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        return res.json({ success: false });
+      }
+
+      if (results.length === 0) {
+        return res.json({ success: false });
+      }
+
+      const userID = results[0].ID;
+      const userEmail = results[0].Email;
+
+      // Générer le jeton de réinitialisation du mot de passe
+      const tokenValue = jwt.sign({ id: userID }, jwtSecret, { expiresIn: '1h' });
+
+      // Date d'expiration du jeton
+      const expiredDate = new Date();
+      expiredDate.setHours(expiredDate.getHours() + 1); // Le jeton expire dans 1 heure
+
+      // Enregistrer le jeton dans la base de données
+      await createPasswordResetToken(userID, tokenValue, expiredDate);
+
+      // Construire l'URL de réinitialisation du mot de passe avec le jeton
+      const resetURL = `http://localhost:3000/reset-password/${tokenValue}`;
+
+      // Configurer le transporteur de Nodemailer pour ProtonMail
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.protonmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: 'CapChat.support@proton.me',
+          pass: 'eGe7Pos6o9QEp$&Y'
+        }
+      });
+
+      const mailOptions = {
+        from: 'CapChat.support@proton.me',
+        to: userEmail,
+        subject: 'Demande de réinitialisation du mot de passe',
+        text: `Bonjour,\n\nVous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le lien suivant pour créer un nouveau mot de passe : ${resetURL}\n\nSi vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.\n\nCordialement,`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error(error);
+          return res.json({ success: false });
+        }
+        console.log('E-mail envoyé :', info.response);
+        return res.json({ success: true });
+      });
+    });
+  } catch (error) {
+    console.error(error);
+    return res.json({ success: false });
+  }
+});
+
+// Route pour la réinitialisation du mot de passe avec le jeton
+router.get('/reset-password/:token', (req, res) => {
+  const token = req.params.token;
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+
+    // Vérifier si le jeton existe et n'est pas expiré dans la base de données
+    connection.query('SELECT UserID, Expired FROM Token WHERE TokenValue = ? AND Expired > NOW() AND PaswordToken = 1', [token], (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        return res.redirect('/erreur/500?message=' + encodeURIComponent('Erreur interne'));
+      }
+
+      if (results.length === 0) {
+        return res.redirect('/erreur/403?message=' + encodeURIComponent('Jeton de réinitialisation de mot de passe invalide ou expiré'));
+      }
+
+      const userID = results[0].UserID;
+
+      // Enregistrer l'ID utilisateur dans un cookie pour la réinitialisation du mot de passe
+      res.cookie('resetUserID', userID, { httpOnly: true });
+
+      res.sendFile(path.join(__dirname, '../views', 'reset-password.html'));
+    });
+  } catch (error) {
+    console.error(error);
+    return res.redirect('/erreur/403?message=' + encodeURIComponent('Jeton de réinitialisation de mot de passe invalide'));
+  }
+});
+
 
 router.get('*/erreur/:idErreur', (req, res) => {
   const idErreur = req.params.idErreur;
@@ -770,6 +896,11 @@ router.get('*/erreur/:idErreur', (req, res) => {
 router.get('*', (req, res) => {
   res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('La page existe pas')}`);
 });
+
+
+
+
+
 
 
 module.exports = router;
