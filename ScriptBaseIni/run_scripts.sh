@@ -14,6 +14,7 @@ echo "Copie des répertoires et fichiers vers image..."
 cp -r "${SCRIPT_BASE_DIR}/neutres" "${IMAGE_DIR}/"
 cp -r "${SCRIPT_BASE_DIR}/singuliers" "${IMAGE_DIR}/"
 cp -r "${SCRIPT_BASE_DIR}/temp" "${IMAGE_DIR}/"
+cp "${SCRIPT_BASE_DIR}/logoCapChat.png" "${IMAGE_DIR}/"
 cp "${SCRIPT_BASE_DIR}/Indices_singuliers.txt" "${IMAGE_DIR}/"
 
 #echo "Exécution de 1-Script-Base.js..."
