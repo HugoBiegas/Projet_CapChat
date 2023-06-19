@@ -21,7 +21,7 @@ function addThemeRow(theme) {
   countCell.textContent = theme.nombreImages;
 
   const urlCell = row.insertCell();
-  urlCell.textContent = theme.urlUsageTheme;
+  urlCell.textContent = '/capchatTheme/' + theme.urlUsageTheme;
 
   const buttonCell = row.insertCell();
   const addButton = document.createElement('button');
@@ -43,7 +43,7 @@ function addCapChatRow(capChat) {
   countCell.textContent = capChat.nombreImages;
 
   const urlCell = row.insertCell();
-  urlCell.textContent = capChat.urlUsage;
+  urlCell.textContent = '/capchat/' + capChat.urlUsage;
 
   const buttonCell = row.insertCell();
   const testButton = document.createElement('button');

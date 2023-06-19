@@ -1,46 +1,59 @@
-<!DOCTYPE html>
-<html>
+  <!DOCTYPE html>
+  <html>
 
-<head>
-  <title>Inscription</title>
-  <link rel="stylesheet" href="css/inscription.css">
-  <link rel="icon" href="image/logoCapChat.png" type="image/png">
+  <head>
+    <title>Inscription</title>
+    <link rel="stylesheet" href="/css/inscription.css">
+    <link rel="icon" href="image/logoCapChat.png" type="image/png">
 
-</head>
+  </head>
 
-<body>
-  <div class="login-container">
-    <h1>Inscription</h1>
-    <form id="inscriptionForm">
-      <label for="NameArtiste"><b>Nom d'Artiste*</b></label>
-      <input type="text" id="NameArtiste" placeholder="Entrer le nom d'Artiste" name="NameArtiste"><br>
+  <body>
+    <div class="login-box">
+      <h2>Inscription</h2>
+      <form id="inscriptionForm">
+        <div class="user-box">
+          <input type="text" id="NameArtiste" name="NameArtiste" required="">
+          <label for="NameArtiste" class="input-label">Nom d'Artiste*</label>
+        </div>
+      
+        <div class="user-box">
+          <input type="text" id="username" name="username" required minlength="3">
+          <label for="username" class="input-label">Nom d'utilisateur</label>
+        </div>
+      
+        <div class="user-box">
+          <input type="email" id="email" name="email" required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+          <label for="email" class="input-label">Email</label>
+        </div>
+      
+        <div class="user-box">
+          <input type="password" id="password" name="password" required pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$">
+          <label for="password" class="input-label">Mot de passe</label>
+        </div>
+      
+        <p id="password-criteria-header" class="hidden" style="color: beige;">Critère pour le mot de passe :</p>
+        <ul id="password-criteria" class="hidden">
+          <li id="length">Au moins 8 caractères</li>
+          <li id="lowercase">Contient une lettre minuscule</li>
+          <li id="uppercase">Contient une lettre majuscule</li>
+          <li id="number">Contient un chiffre</li>
+        </ul>
+        <button type="submit" id="submit-btn"><span></span><span></span><span></span><span></span>S'inscrire</button>
+      </form>
+      
+      <a href="/connexion" class="connexion-btn">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        Connexion
+      </a>
+      
+      <p style="color: red;">*n'est pas obligatoire</p>
+    </div>
 
-      <label for="username"><b>Nom d'utilisateur</b></label>
-      <input type="text" id="username" placeholder="Entrer le nom d'utilisateur" name="username" required
-        minlength="3"><br>
+    <script src="/js/inscription.js"></script>
+  </body>
 
-      <label for="email"><b>Email</b></label>
-      <input type="email" id="email" placeholder="Entrer votre adresse email" name="email" required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"><br>
-        
-      <label for="password"><b>Mot de passe</b></label>
-      <input type="password" placeholder="Entrer le mot de passe" id="password" name="password" required
-        pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$"><br>
-      <p id="password-criteria-header" class="hidden">Critaire pour le mot de passe :</p>
-      <ul id="password-criteria" class="hidden">
-        <li id="length">Au moins 8 caractères</li>
-        <li id="lowercase">Contient une lettre minuscule</li>
-        <li id="uppercase">Contient une lettre majuscule</li>
-        <li id="number">Contient un chiffre</li>
-      </ul>
-
-      <button type="submit" id="submit-btn">S'inscrire</button>
-    </form>
-    <a href="/connexion">
-      <button type="button">Connexion</button>
-    </a>
-    <p style="color: red;">*n'est pas obligatoire</p>
-  </div>
-  <script src="/js/inscription.js"></script>
-</body>
-
-</html>
+  </html>

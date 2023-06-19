@@ -59,7 +59,7 @@ imagesInput.addEventListener('change', event => {
         const zipPromises = [];
 
         zip.forEach((relativePath, zipEntry) => {
-          if (!zipEntry.dir && ['.png', '.jpg'].includes(relativePath.slice(-4))) {
+          if (!zipEntry.dir && ['.png', '.jpg', '.jpeg'].includes(relativePath.slice(-4))) {
             const imagePromise = zipEntry.async('blob').then(zipFile => {
               const fileName = relativePath.split('/').pop();
               const fileType = getFileType(fileName);

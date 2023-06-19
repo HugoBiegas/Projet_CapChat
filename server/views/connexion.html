@@ -3,33 +3,43 @@
 
 <head>
     <title>Page de Connexion</title>
-    <script src="/capchat/general.js"></script> <!-- Assurez-vous que le chemin est correct -->
-    <link rel="stylesheet" href="/css/connexion.css">
     <link rel="icon" href="image/logoCapChat.png" type="image/png">
+    <link rel="stylesheet" href="css/styles.css">
 
 </head>
 
 <body>
-    <div class="login-container">
-        <h1>Connexion</h1>
+    <div class="login-box">
+        <h2>Connexion</h2>
         <form action="/connexion" method="POST">
-            <label for="uname"><b>Nom d'utilisateur</b></label>
-            <input type="text" placeholder="Entrer le nom d'utilisateur" name="username" required>
-
-            <label for="psw"><b>Mot de passe</b></label>
-            <input type="password" placeholder="Entrer le mot de passe" name="password" required>
-
-            <button type="button" id="capchat-btn">CapChat</button>
-            <button type="submit" id="submit-btn" disabled>Se connecter</button>
+            <div class="user-box">
+                <input type="text" name="username" required>
+                <label>Nom d'utilisateur</label>
+            </div>
+            <div class="user-box">
+                <input type="password" name="password" required>
+                <label>Mot de passe</label>
+            </div>
+            <div class="user-box">
+                <button type="button" id="capchat-btn"><span id="capchat-icon"></span><span></span><span></span><span></span>CapChat</button>
+                <button type="submit" id="submit-btn" disabled><span></span><span></span><span></span><span></span>Se connecter</button>
+            </div>
         </form>
-        <a href="/inscription">
-            <button>s'inscrire</button>
-        </a>
-        <p><a href="#" id="forgot-password-link">Mot de passe oublié</a></p>
+        <div class="user-box">
+            <a href="/inscription" id="signup-btn">
+                S'inscrire
+            </a>
+        </div>
+        <div class="user-box">
+            <a href="#" id="forgot-password-link">
+
+                Mot de passe oublié
+            </a>
+        </div>
     </div>
 
     <!-- Fenêtre modale pour la réinitialisation du mot de passe -->
-    <div id="modal" class="modal">
+    <div id="modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Réinitialisation du mot de passe</h2>
@@ -43,6 +53,5 @@
 
     <script src="/js/connexion.js"></script>
 </body>
-
 
 </html>

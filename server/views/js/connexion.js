@@ -25,6 +25,20 @@ function openModal() {
 // Fonction pour fermer la fenêtre modale
 function closeModal() {
   modal.style.display = 'none';
+  window.location.href = '/connexion';
+
+}
+
+// Fonction pour changer l'icône du bouton CapChat en croix rouge
+function setCrossIcon() {
+  capchatBtn.classList.remove('capchat-success');
+  capchatBtn.classList.add('capchat-error');
+}
+
+// Fonction pour changer l'icône du bouton CapChat en V vert
+function setCheckIcon() {
+  capchatBtn.classList.remove('capchat-error');
+  capchatBtn.classList.add('capchat-success');
 }
 
 // Ajouter un événement au clic sur le bouton du CapChat
@@ -41,7 +55,9 @@ function checkCapChat(submitBtnConnexion) {
   const capchatSuccess = localStorage.getItem('capchatSuccess');
   if (capchatSuccess === 'true') {
     enableSubmitBtn();
+    setCheckIcon();
   } else {
+    setCrossIcon();
     submitBtn.disabled = true;
     submitBtn.classList.remove('success'); // Retirer la classe 'success' pour le style vert
     if (submitBtnConnexion === true) {
@@ -70,6 +86,18 @@ document.querySelector('form').addEventListener('submit', (event) => {
 // Vérifier le CapChat lors du chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
   checkCapChat(false);
+
+  // Récupérer les paramètres de l'URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const errorMessage = urlParams.get('message');
+
+  // Afficher le message d'erreur s'il est présent
+  if (errorMessage) {
+    alert(decodeURIComponent(errorMessage));
+
+    window.location.href = '/connexion';
+
+  }
 });
 
 // Ajouter un événement au clic sur le lien "Mot de passe oublié"

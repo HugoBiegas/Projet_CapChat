@@ -92,7 +92,8 @@ function deleteImage(imagePath) {
   const confirmation = confirm("Voulez-vous vraiment supprimer cette image ?");
 
   if (confirmation) {
-    fetch(`/api/deleteimage/${imagePath}`, { method: 'DELETE' })
+    const urlUsage = window.location.pathname.split("/").pop();
+    fetch(`/api/deleteimage/${imagePath}/${urlUsage}`, { method: 'DELETE' })
       .then(response => response.json())
       .then(data => {
         if (data.message) {
@@ -235,9 +236,9 @@ document.getElementById("addValidateButton").addEventListener("click", function 
       document.getElementById("addImageModal").style.display = "none";
 
       location.reload(true);
-
     })
     .catch(error => {
+      alert(error.response.data.message);
       console.error('Erreur:', error);
     });
 });

@@ -1,1 +1,2 @@
-/*npm install mysql bcrypt crypto fs express multer path readline body-parser cors axios jsonwebtoken cookie-parser sharp jszip nodemailer*/
+/* npm install mysql bcrypt crypto fs express multer path readline body-parser cors axios jsonwebtoken cookie-parser sharp jszip nodemailer tailwindcss postcss postcss-cli autoprefixer */
+/* pour compiler le css : npm run build:css */

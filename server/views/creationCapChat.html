@@ -12,6 +12,12 @@
 </head>
 
 <body>
+    <div class="navbar">
+        <a href="/accueil">Accueil</a>
+        <a href="/information">Informations CapChat</a>
+        <a href="/CreationCapChat">Créer CapChat</a>
+        <a href="/Profile">Profile</a>
+    </div>
     <h1>Création de CaptChat</h1>
     <div id="modal"
         style="display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
@@ -36,7 +42,7 @@
         </div>
 
         <label for="images">Images ou fichier ZIP:</label>
-        <input type="file" id="images" name="images" accept=".zip, .png, .jpg, .jpeg" multiple>
+        <input type="file" id="images" name="images" accept=".zip, .png, .jpg" multiple>
 
         <table id="imagesTable" style="display: none;">
             <thead>
