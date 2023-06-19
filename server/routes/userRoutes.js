@@ -29,6 +29,7 @@ const query = util.promisify(connection.query).bind(connection);
 
 
 const router = express.Router();
+
 const jwtSecret = 'Be6a3AxqecEym!J6?h5KXnFC7TS$zsyexEGY7EcQ';
 router.use(cookieParser());
 
