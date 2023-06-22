@@ -154,8 +154,8 @@ router.get(['*/capchatTheme/:name', '*/capchat/:urlUsage'], (req, res) => {
 });
 
 
-router.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'views', 'index.html'));
+router.get('/', ConnexionAutomatique, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'views', 'connexion.html'));
 });
 
 router.get('/creationCapChat', authenticateToken, (req, res) => {
@@ -166,7 +166,7 @@ router.get('/information', authenticateToken, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'information.html'));
 });
 
-router.get('/inscription', (req, res) => {
+router.get('/inscription', ConnexionAutomatique, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'inscription.html'));
 });
 router.get('/Profile', (req, res) => {
@@ -174,9 +174,26 @@ router.get('/Profile', (req, res) => {
 });
 
 
-router.get('/connexion', (req, res) => {
+router.get('/connexion', ConnexionAutomatique, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'connexion.html'));
 });
+
+router.get('/deconnexion', authenticateToken, (req, res) => {
+  // Supprimez le token de la base de données
+  connection.query('DELETE FROM Token WHERE UserID = ? AND TokenValue = ?', [req.user.id, req.token], (error, results, fields) => {
+    if (error) {
+      console.error(error);
+      return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur interne')}`);
+    }
+
+    // Supprimez le cookie authToken
+    res.clearCookie('authToken');
+
+    // Redirigez l'utilisateur vers '/'
+    res.redirect('/');
+  });
+});
+
 
 router.get('/api/urlusage', authenticateToken, (req, res) => {
   connection.query(`SELECT URLUsage FROM ImageSets`, function (error, results, fields) {
@@ -428,6 +445,57 @@ function authenticateToken(req, res, next) {
 
 
       if (results.length === 0) {
+        connection.query('SELECT ID FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired < NOW()', [decoded.id, token], (error, results, fields) => {
+          if (error) {
+            console.error(error);
+            return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur interne')}`);
+          }
+
+          if (results.length > 0) {
+            connection.query('DELETE FROM Token WHERE UserID = ? AND TokenValue = ?', [decoded.id, token], (error, results, fields) => {
+              if (error) {
+                console.error(error);
+                return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur interne')}`);
+              }
+            });
+          }
+        });
+        // Supprimer le cookie du navigateur
+        res.clearCookie('authToken');
+        return res.redirect(req.originalUrl + `/erreur/401?message=${encodeURIComponent('Authentification invalide. Veuillez vous reconnecter')}`);
+      }
+      next();
+    });
+  });
+}
+
+function ConnexionAutomatique(req, res, next) {
+  // Récupérer le token du cookie
+  const token = req.cookies['authToken'];
+  if (!token)
+    return next();
+
+
+  jwt.verify(token, jwtSecret, (error, decoded) => {
+    if (error)
+      return next();
+
+    req.token = token;
+    req.user = decoded;
+
+    // Vérifier que le token existe et n'est pas expiré dans la base de données
+    connection.query('SELECT ID,PaswordToken FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        return next();
+      }
+
+      if (results.length >= 1) {
+        return res.redirect(req.originalUrl + `accueil`);
+
+      }
+
+      else if (results.length === 0) {
         connection.query('SELECT ID FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired < NOW()', [decoded.id, token], (error, results, fields) => {
           if (error) {
             console.error(error);
