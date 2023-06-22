@@ -6,19 +6,56 @@
     <title>Modifications CapChat</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" href="/css/test.css">
-    <link rel="icon" href="image/logoCapChat.png" type="image/png">
+    <link rel="icon" href="views/image/logoCapChat.png" type="image/png">
 
 </head>
 
 <body>
-    <!-- menu.html -->
-    <div class="navbar">
-        <a href="/accueil">Accueil</a>
-        <a href="/information">Informations CapChat</a>
-        <a href="/CreationCapChat">Créer CapChat</a>
-        <a href="/Profile">Profil</a>
-    </div>
-
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <button
+                class="navbar-toggler"
+                type="button"
+                data-mdb-toggle="collapse"
+                data-mdb-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+            >
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <a class="navbar-brand mt-2 mt-lg-0" href="/accueil">
+                    <img
+                        src="views/image/logoCapChat.png"
+                        height="50"
+                        loading="lazy"
+                    />
+                </a>
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/information">Informations CapChat</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/CreationCapChat">Créer CapChat</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Profile">Profile</a>
+                    </li>
+                </ul>
+                <div class="ml-auto">
+                    <a class="btn btn-danger float-right" href="/deconnexion">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power" viewBox="0 0 16 16">
+                            <path d="M7.5 1v7h1V1h-1z"/>
+                            <path d="M3 8.812a4.999 4.999 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812z"/>
+                          </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
     <h1 id="capchatName"></h1>
     <button id="addImageButton">Ajouter une image</button>
     <table id="imagesTable">

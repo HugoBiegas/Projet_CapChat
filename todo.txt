@@ -2,5 +2,5 @@ tache a faire :
     -ajouter la posibiliter de suprimer un capChat
     -ajouter la posibiliter dans modifications d'un capchat de pouvoir modifier sont théme, son nom
     -créer la partie informations qui permet a l'utilisateur de changer sont nom, son nomArtiste et sont email
-    -si le temps créer une page admin permettent de valider les comptes.
-    -faire le css du site.
+    -faire admin / liste des ustilisateur avec suprestions 
+    - remplire les sprint
