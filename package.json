@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:css": "postcss server/views/src/styles.css -o server/views/css/styles.css",
     "start": "nodemon Server/app.js",
-    "build-tail":"tailwindcss build -i  server/views/css/tailwindcss.css -o  server/views/css/styles.css"
+    "build-tail": "tailwindcss build -i  server/views/css/tailwindcss.css -o  server/views/css/styles.css"
   },
   "author": "",
   "license": "ISC",

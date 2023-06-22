@@ -17,6 +17,40 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(error => console.error(error));
 });
+let dropzone = document.querySelector('.dropzone-wrapper');
+let input = document.getElementById('images');
+
+// Ajout d'événements drag and drop sur la zone de dépôt
+dropzone.addEventListener('dragover', function (e) {
+  e.preventDefault();
+  this.style.backgroundColor = '#999';  // Changement de la couleur de fond lors du survol
+});
+
+dropzone.addEventListener('dragleave', function () {
+  this.style.backgroundColor = 'transparent';  // Rétablissement de la couleur de fond d'origine lorsque l'élément est déplacé en dehors
+});
+
+dropzone.addEventListener('drop', function (e) {
+  e.preventDefault();
+  this.style.backgroundColor = 'transparent';  // Rétablissement de la couleur de fond d'origine lorsque les fichiers sont déposés
+
+  let files = e.dataTransfer.files;  // Récupération des fichiers déposés
+  input.files = files;  // Affectation des fichiers déposés à l'élément input
+  console.log(files);
+  // Déclenchement manuel de l'événement change sur l'élément input
+  let event = new Event('change', { bubbles: true });
+  input.dispatchEvent(event);
+});
+
+// Ancien code de clic
+dropzone.addEventListener('click', function () {
+  input.click();
+});
+// Ouverture du sélecteur de fichiers lors du clic sur la zone
+dropzone.addEventListener('click', function () {
+  input.click();
+});
+
 
 // Handle new theme display
 const themeSelect = document.getElementById('theme');

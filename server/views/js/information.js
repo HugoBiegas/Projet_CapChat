@@ -25,7 +25,7 @@ function addThemeRow(theme) {
 
   const buttonCell = row.insertCell();
   const addButton = document.createElement('button');
-  addButton.textContent = 'Ajouter';
+  addButton.textContent = 'Tester';
   addButton.onclick = function () {
     addToURL(theme.urlUsageTheme);
   };

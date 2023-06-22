@@ -130,7 +130,6 @@ function handleCapChatSuccess(timerInterval, urlUsage) {
     clearInterval(timerInterval);
     const storedUsername = localStorage.getItem('storedUsername');
     const storedPassword = localStorage.getItem('storedPassword');
-
     localStorage.clear();
     localStorage.setItem('capchatSuccess', 'true');
     localStorage.setItem('storedUrlUsage', urlUsage);
@@ -148,6 +147,7 @@ function handleCapChatFailure(timerInterval) {
     alert("Vous n'êtes pas un humain !");
     const storedUsername = localStorage.getItem('storedUsername');
     const storedPassword = localStorage.getItem('storedPassword');
+
     localStorage.clear();
     localStorage.setItem('capchatSuccess', 'false');
     localStorage.setItem('storedUsername', storedUsername);

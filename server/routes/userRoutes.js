@@ -169,6 +169,10 @@ router.get('/information', authenticateToken, (req, res) => {
 router.get('/inscription', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'inscription.html'));
 });
+router.get('/Profile', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'views', 'profil.html'));
+});
+
 
 router.get('/connexion', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'connexion.html'));

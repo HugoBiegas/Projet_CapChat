@@ -8,57 +8,110 @@
     <link rel="stylesheet" href="/css/creationCapChat.css">
     <title>Création de CaptChat</title>
     <link rel="icon" href="image/logoCapChat.png" type="image/png">
-
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 
 <body>
-    <div class="navbar">
-        <a href="/accueil">Accueil</a>
-        <a href="/information">Informations CapChat</a>
-        <a href="/CreationCapChat">Créer CapChat</a>
-        <a href="/Profile">Profile</a>
-    </div>
-    <h1>Création de CaptChat</h1>
-    <div id="modal"
-        style="display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
-        <div style="position: relative; margin: auto; top: 50%; width: 50px; height: 50px;">
-            <div id="spinner"
-                style="border: 16px solid #f3f3f3; border-top: 16px solid #3498db; border-radius: 50%; width: 120px; height: 120px; animation: spin 2s linear infinite;">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid navbar">
+            <button
+                class="navbar-toggler"
+                type="button"
+                data-mdb-toggle="collapse"
+                data-mdb-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+            >
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <a class="navbar-brand mt-2 mt-lg-0" href="/accueil">
+                    <img
+                        src="/image/logoCapChat.png"
+                        height="15"
+                        loading="lazy"
+                    />
+                </a>
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/information">Informations CapChat</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/CreationCapChat">Créer CapChat</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/Profile">Profile</a>
+                    </li>
+                </ul>
+                <div class="ml-auto">
+                    <a class="btn btn-danger float-right" href="/deconnexion">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power" viewBox="0 0 16 16">
+                            <path d="M7.5 1v7h1V1h-1z"/>
+                            <path d="M3 8.812a4.999 4.999 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812z"/>
+                          </svg>
+                    </a>
+                </div>
             </div>
         </div>
+    </nav>
+
+    <div id="modal" class="container mt-5" style="display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+        <div style="position: relative; margin: auto; top: 50%; width: 50px; height: 50px;">
+            <div id="spinner" style="border: 16px solid #f3f3f3; border-top: 16px solid #3498db; border-radius: 50%; width: 120px; height: 120px; animation: spin 2s linear infinite;"></div>
+        </div>
     </div>
 
-    <form id="creationForm" enctype="multipart/form-data">
-        <label for="capchatName">Nom du CaptChat:</label>
-        <input type="text" id="capchatName" name="capchatName" required>
+    <div class="container mt-5">
+        <h1 class="mb-5 text-center">Création de CaptChat</h1>
+        <form id="creationForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="capchatName">Nom du CaptChat:</label>
+                <input type="text" id="capchatName" name="capchatName" class="form-control" required>
+            </div>
 
-        <label for="theme">Thème:</label>
-        <select id="theme" name="theme" required>
-        </select>
+            <div class="form-group">
+                <label for="theme">Thème:</label>
+                <select id="theme" name="theme" class="form-control" required>
+                </select>
+            </div>
 
-        <div id="nouveauThemeContainer" style="display: none;">
-            <label for="nouveauTheme">Nouveau thème:</label>
-            <input type="text" id="nouveauTheme" name="nouveauTheme">
-        </div>
+            <div id="nouveauThemeContainer" class="form-group" style="display: none;">
+                <label for="nouveauTheme">Nouveau thème:</label>
+                <input type="text" id="nouveauTheme" name="nouveauTheme" class="form-control">
+            </div>
 
-        <label for="images">Images ou fichier ZIP:</label>
-        <input type="file" id="images" name="images" accept=".zip, .png, .jpg" multiple>
+            <div class="form-group">
+                <label for="images">Images ou fichier ZIP:</label>
+                <div class="dropzone-wrapper">
+                    <input type="file" id="images" name="images" class="form-control-file" accept=".zip, .png, .jpg" multiple style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down-fill" viewBox="0 0 16 16">
+                        <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zm-1 4v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 11.293V7.5a.5.5 0 0 1 1 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <table id="imagesTable" class="table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Nom</th>
+                        <th>Question</th>
+                        <th>Supprimer</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
 
-        <table id="imagesTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>Image</th>
-                    <th>Nom</th>
-                    <th>Question</th>
-                    <th>Supprimer</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Enregistrer le CaptChat</button>
+            </div>
+        </form>
+    </div>
 
-        <button type="submit">Enregistrer le CaptChat</button>
-    </form>
     <script src="/js/creationCapChat.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 
 </html>

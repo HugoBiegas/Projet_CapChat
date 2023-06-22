@@ -29,17 +29,6 @@ function closeModal() {
 
 }
 
-// Fonction pour changer l'icône du bouton CapChat en croix rouge
-function setCrossIcon() {
-  capchatBtn.classList.remove('capchat-success');
-  capchatBtn.classList.add('capchat-error');
-}
-
-// Fonction pour changer l'icône du bouton CapChat en V vert
-function setCheckIcon() {
-  capchatBtn.classList.remove('capchat-error');
-  capchatBtn.classList.add('capchat-success');
-}
 
 // Ajouter un événement au clic sur le bouton du CapChat
 capchatBtn.addEventListener('click', () => {
@@ -55,15 +44,16 @@ function checkCapChat(submitBtnConnexion) {
   const capchatSuccess = localStorage.getItem('capchatSuccess');
   if (capchatSuccess === 'true') {
     enableSubmitBtn();
-    setCheckIcon();
   } else {
-    setCrossIcon();
     submitBtn.disabled = true;
     submitBtn.classList.remove('success'); // Retirer la classe 'success' pour le style vert
     if (submitBtnConnexion === true) {
       alert("Veuillez compléter le CapChat pour vous connecter.");
     }
   }
+
+  usernameInput.value = localStorage.getItem('storedUsername');
+  passwordInput.value = localStorage.getItem('storedPassword');
 }
 function enableSubmitBtn() {
   submitBtn.disabled = false;

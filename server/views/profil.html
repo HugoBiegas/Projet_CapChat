@@ -3,10 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Accueil Artiste</title>
-    <link rel="stylesheet" href="/css/acceuilArtiste.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/profile.css">
+    <title>Profile</title>
     <link rel="icon" href="image/logoCapChat.png" type="image/png">
-    <!-- Ajoutez le lien Bootstrap CSS ici -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 
@@ -57,27 +57,34 @@
     </nav>
           
     <div class="container">
-        <h1 class="mt-4">Bonjour <span id="username"></span></h1>
-        <h2>Nom d'Artiste : <span id="artistName"></span></h2>
-        <table id="capchatsTable" class="table mt-4">
-            <thead>
-                <tr>
-                    <th>Nom CapChat</th>
-                    <th>Nombre d'Images</th>
-                    <th>URL Utilisable</th>
-                    <th>Tester</th>
-                    <th>Modification</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Les lignes du tableau seront générées dynamiquement par JavaScript -->
-            </tbody>
-        </table>
+        <h1>Profile</h1>
+        <form id="profileForm">
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur:</label>
+                <input type="text" id="username" name="username" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="artistName">Nom d'artiste:</label>
+                <input type="text" id="artistName" name="artistName" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe:</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirmez le mot de passe:</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+        </form>
     </div>
-    <script src="/js/acceuilArtiste.js"></script>
-    <!-- Ajoutez le lien Bootstrap JS ici -->
+    <script src="/js/profile.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    </body>
+</body>
 
 </html>
