@@ -42,10 +42,6 @@ dropzone.addEventListener('drop', function (e) {
   input.dispatchEvent(event);
 });
 
-// Ancien code de clic
-dropzone.addEventListener('click', function () {
-  input.click();
-});
 // Ouverture du sélecteur de fichiers lors du clic sur la zone
 dropzone.addEventListener('click', function () {
   input.click();
@@ -295,6 +291,8 @@ document.getElementById('creationForm').addEventListener('submit', event => {
     .then(response => response.json())
     .then(data => {
       console.log(data);
+      alert("votre capChat a bien êter enregistrer !");
+      window.location.replace("/");
     })
     .catch(error => {
       console.error('Erreur:', error);

@@ -1,0 +1,13 @@
+.addButton {
+    display: flex;
+    justify-content: center;
+}
+
+.close {
+    display: none;
+}
+
+.img-thumbnail {
+    width: 250px;
+    object-fit: contain;
+}

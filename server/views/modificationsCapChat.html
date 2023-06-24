@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <title>Modifications CapChat</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <link rel="stylesheet" href="/css/test.css">
+    <link rel="stylesheet" href="/css/midificationCapChat.css">
     <link rel="icon" href="views/image/logoCapChat.png" type="image/png">
-
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 
 <body>
@@ -28,7 +28,7 @@
                 <a class="navbar-brand mt-2 mt-lg-0" href="/accueil">
                     <img
                         src="views/image/logoCapChat.png"
-                        height="50"
+                        height="100"
                         loading="lazy"
                     />
                 </a>
@@ -49,51 +49,101 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power" viewBox="0 0 16 16">
                             <path d="M7.5 1v7h1V1h-1z"/>
                             <path d="M3 8.812a4.999 4.999 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812z"/>
-                          </svg>
+                        </svg>
                     </a>
                 </div>
             </div>
         </div>
     </nav>
-    
-    <h1 id="capchatName"></h1>
-    <button id="addImageButton">Ajouter une image</button>
-    <table id="imagesTable">
-        <tr>
-            <th>Image</th>
-            <th>Nom de l'image</th>
-            <th>Question</th>
-            <th>Actions</th>
-        </tr>
-    </table>
-    <!-- Fenêtre modale pour ajouter une image -->
-    <div id="addImageModal" class="modal">
-        <!-- Le contenu de votre fenêtre modale existante...
-       Notez que vous devez changer les id pour éviter les doublons. -->
-        <div class="modal-content">
-            <h2>Ajouter une image</h2>
-            <!-- Le reste de votre code modal... -->
-            <input type="text" id="addImageNameInput" placeholder="Nom de l'image">
-            <input type="text" id="addQuestionInput" placeholder="Question">
-            <input type="file" id="addImageFileInput" accept=".png,.jpg">
-            <button id="addValidateButton">Valider</button>
-            <button id="addCancelButton">Annuler</button>
+              
+    <div class="container mt-3">
+        <h1 id="capchatName" class="text-center"></h1>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <button id="addImageButton" class="btn btn-primary">Ajouter une image</button>
+            <button id="modifyThemeButton" class="btn btn-info">Modifier le nom / thème</button> <!-- Nouveau bouton -->
         </div>
-    </div>
+        <table id="imagesTable" class="table mt-3">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Nom de l'image</th>
+                    <th>Question</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            <!-- Les lignes du tableau seront probablement générées dynamiquement -->
+            </tbody>
+        </table>
 
-    <!-- Fenêtre modale pour modifications -->
-    <div id="myModal" class="modal">
-        <div class="modal-content">
-            <h2>Modifier image</h2>
-            <input type="file" id="imageFileInput" accept=".png,.jpg">
-            <input type="text" id="imageNameInput" placeholder="Nom de l'image">
-            <input type="text" id="questionInput" placeholder="Question">
-            <button id="validateButton">Valider</button>
-            <button id="cancelButton">Annuler</button>
+        <!-- Fenêtre modale pour ajouter une image -->
+        <div id="addImageModal" class="modal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Ajouter une image</h2>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" id="addImageNameInput" class="form-control" placeholder="Nom de l'image">
+                        <input type="text" id="addQuestionInput" class="form-control mt-2" placeholder="Question">
+                        <input type="file" id="addImageFileInput" class="form-control-file mt-2" accept=".png,.jpg">
+                    </div>
+                    <div class="modal-footer">
+                        <button id="addValidateButton" class="btn btn-success">Valider</button>
+                        <button id="addCancelButton" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Fenêtre modale pour modifications -->
+        <div id="myModal" class="modal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Modifier image</h2>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="file" id="imageFileInput" class="form-control-file" accept=".png,.jpg">
+                        <input type="text" id="imageNameInput" class="form-control mt-2" placeholder="Nom de l'image">
+                        <input type="text" id="questionInput" class="form-control mt-2" placeholder="Question">
+                    </div>
+                    <div class="modal-footer">
+                        <button id="validateButton" class="btn btn-success">Valider</button>
+                        <button id="cancelButton" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<!-- Fenêtre modale pour modifier le nom du thème -->
+<div id="modifyThemeModal" class="modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Modifier le nom / thème</h2>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="text" id="NameCapChatInput" class="form-control" placeholder="Nom">
+        </div>
+        <div class="modal-body">
+          <input type="text" id="themeNameInput" class="form-control" placeholder="thème">
+        </div>
+        <div class="modal-footer">
+          <button id="modifyThemeCancelButton" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+          <button id="modifyThemeValidateButton" class="btn btn-success">Valider</button>
+        </div>
+      </div>
     </div>
+  </div>
+  
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="/js/modifCapChat.js"></script>
-
 </body>
 
 </html>

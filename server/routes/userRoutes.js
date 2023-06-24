@@ -31,6 +31,7 @@ const query = util.promisify(connection.query).bind(connection);
 const router = express.Router();
 
 const jwtSecret = 'Be6a3AxqecEym!J6?h5KXnFC7TS$zsyexEGY7EcQ';
+
 router.use(cookieParser());
 
 router.use(cors());
@@ -417,6 +418,45 @@ function generateAccessToken(userId) {
   return jwt.sign({ id: userId }, jwtSecret, { expiresIn: '1d' });
 }
 
+function authenticateTokenAdmin(req, res, next) {
+  // Récupérer le token du cookie
+  const token = req.cookies['authToken'];
+
+  if (!token) {
+    return res.redirect(req.originalUrl + `/erreur/401?message=${encodeURIComponent('Jetons d\'authentification manquants')}`);
+  }
+
+  jwt.verify(token, jwtSecret, (error, decoded) => {
+    if (error) {
+      console.error(error);
+      return res.redirect(req.originalUrl + `/erreur/403?message=${encodeURIComponent('Échec de l\'authentification du jeton')}`);
+    }
+
+    req.token = token;
+    req.user = decoded;
+
+    // Vérifier que le token existe et n'est pas expiré dans la base de données
+    connection.query('SELECT ID, TypeToken FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
+      if (error) {
+        console.error(error);
+        return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur interne')}`);
+      }
+
+      if (results.length === 0) {
+        // Supprimer le cookie du navigateur
+        res.clearCookie('authToken');
+        return res.redirect(req.originalUrl + `/erreur/401?message=${encodeURIComponent('Authentification invalide. Veuillez vous reconnecter')}`);
+      }
+
+      if (results[0].TypeToken !== 1) {
+        return res.redirect('/');
+      }
+
+      next();
+    });
+  });
+}
+
 function authenticateToken(req, res, next) {
   // Récupérer le token du cookie
   const token = req.cookies['authToken'];
@@ -435,12 +475,12 @@ function authenticateToken(req, res, next) {
     req.user = decoded;
 
     // Vérifier que le token existe et n'est pas expiré dans la base de données
-    connection.query('SELECT ID,PaswordToken FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
+    connection.query('SELECT ID,TypeToken FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
       if (error) {
         console.error(error);
         return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur interne')}`);
       }
-      if (results[0].PaswordToken === 1)
+      if (results[0].TypeToken === 2)
         return res.redirect(req.originalUrl + `/erreur/401?message=${encodeURIComponent('Authentification invalide. Vous ne pouvez pas vous connecter avec un token de réinitialisations de passeword')}`);
 
 
@@ -484,15 +524,16 @@ function ConnexionAutomatique(req, res, next) {
     req.user = decoded;
 
     // Vérifier que le token existe et n'est pas expiré dans la base de données
-    connection.query('SELECT ID,PaswordToken FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
+    connection.query('SELECT ID,TypeToken FROM Token WHERE UserID = ? AND TokenValue = ? AND Expired > NOW()', [decoded.id, token], (error, results, fields) => {
       if (error) {
         console.error(error);
         return next();
       }
-
-      if (results.length >= 1) {
+      if (results.length >= 1 && results[0].TypeToken == 0) {
         return res.redirect(req.originalUrl + `accueil`);
 
+      } else if (results.length >= 1 && results[0].TypeToken === 1) {
+        return res.redirect(req.originalUrl + `accueil-admin`);
       }
 
       else if (results.length === 0) {
@@ -525,16 +566,16 @@ router.post('/connexion', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const users = await query('SELECT ID,Password FROM users WHERE Username = ?', [username]);
+    const users = await query('SELECT ID, Password, Role FROM users WHERE Username = ?', [username]);
     if (users.length === 0) {
-      return res.redirect(req.originalUrl + `?message=${encodeURIComponent('Nom d utilisateur invalide')}`);
+      return res.redirect(req.originalUrl + `?message=${encodeURIComponent('Nom d\'utilisateur invalide')}`);
     }
 
     const user = users[0];
     const passwordMatch = await bcrypt.compare(password, user.Password);
 
     if (!passwordMatch) {
-      return res.redirect(req.originalUrl + `?message=${encodeURIComponent('mot de passe invalide')}`);
+      return res.redirect(req.originalUrl + `?message=${encodeURIComponent('Mot de passe invalide')}`);
     }
 
     const tokens = await query('SELECT ID FROM Token WHERE UserID = ?', [user.ID]);
@@ -544,19 +585,56 @@ router.post('/connexion', async (req, res) => {
 
     const token = generateAccessToken(user.ID); // Appel à generateAccessToken
 
-    await query('INSERT INTO Token (UserID, TokenValue, Expired) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))', [user.ID, token]);
+    // Mettre TypeToken à 1 si l'utilisateur est un administrateur
+    const typeToken = user.Role === 1 ? 1 : 0;
+
+    await query('INSERT INTO Token (UserID, TokenValue, Expired, TypeToken) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY), ?)', [user.ID, token, typeToken]);
 
     // Stocker le token dans un cookie
     res.cookie('authToken', token, { httpOnly: true, secure: true, maxAge: 24 * 60 * 60 * 1000 }); // 1 jour
 
-    // Rediriger vers l'accueil
-    res.redirect('/accueil');
+    // Rediriger en fonction du rôle de l'utilisateur
+    if (user.Role === 0) {
+      res.redirect('/accueil-Admin');
+    } else if (user.Role === 1) {
+      res.redirect('/accueil-Admin');
+    } else {
+      res.redirect('/accueil');
+    }
   } catch (error) {
     console.error(error);
-    return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur connextion a la BD')}`);
+    return res.redirect(req.originalUrl + `/erreur/500?message=${encodeURIComponent('Erreur connexion à la BD')}`);
+  }
+});
+// Récupérer les utilisateurs avec un rôle de 2
+router.get('/api/users', authenticateTokenAdmin, async (req, res) => {
+  try {
+    const users = await query('SELECT ID, Username, NameArtiste FROM Users WHERE Role = 2');
+    res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Erreur lors de la récupération des utilisateurs.' });
   }
 });
 
+// Supprimer un utilisateur
+router.delete('/api/users/:userId', authenticateTokenAdmin, async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    await query('DELETE FROM Users WHERE ID = ?', [userId]);
+    await query('DELETE FROM Token WHERE UserID = ?', [userId]);
+
+    res.status(200).json({ success: true, message: 'Utilisateur supprimé avec succès.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Erreur lors de la suppression de l\'utilisateur.' });
+  }
+});
+
+router.get('/accueil-Admin', authenticateTokenAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'views', 'acceuilAdmin.html'));
+});
 
 router.get('/accueil', authenticateToken, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'views', 'acceuilArtiste.html'));
@@ -581,6 +659,7 @@ router.get('/api/user', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Erreur de serveur' });
   }
 });
+
 // Récupérer les CapChats créés par l'utilisateur
 router.get('/api/capchats', authenticateToken, async (req, res) => {
   try {
@@ -852,10 +931,10 @@ router.post('/api/newCapChat', authenticateToken, upload.array('images'), async 
 
 function createPasswordResetToken(userID, tokenValue, expiredDate) {
   return new Promise((resolve, reject) => {
-    const query = 'INSERT INTO Token (UserID, PaswordToken, TokenValue, Expired) VALUES (?, ?, ?, ?)';
-    const paswordToken = 1; // Valeur de PaswordToken à 1
+    const query = 'INSERT INTO Token (UserID, TypeToken, TokenValue, Expired) VALUES (?, ?, ?, ?)';
+    const TypeToken = 2; // Valeur de TypeToken à 1
 
-    connection.query(query, [userID, paswordToken, tokenValue, expiredDate], (error, results, fields) => {
+    connection.query(query, [userID, TypeToken, tokenValue, expiredDate], (error, results, fields) => {
       if (error) {
         reject(error);
       } else {
@@ -1002,7 +1081,7 @@ router.get('/reset-password/:token', (req, res) => {
     const decoded = jwt.verify(token, jwtSecret);
 
     // Vérifier si le jeton existe et n'est pas expiré dans la base de données
-    connection.query('SELECT UserID, Expired FROM Token WHERE TokenValue = ? AND Expired > NOW() AND PaswordToken = 1', [token], (error, results, fields) => {
+    connection.query('SELECT UserID, Expired FROM Token WHERE TokenValue = ? AND Expired > NOW() AND TypeToken = 2', [token], (error, results, fields) => {
       if (error) {
         console.error(error);
         return res.redirect('/erreur/500?message=' + encodeURIComponent('Erreur interne'));
@@ -1022,6 +1101,54 @@ router.get('/reset-password/:token', (req, res) => {
   } catch (error) {
     console.error(error);
     return res.redirect('/erreur/403?message=' + encodeURIComponent('Jeton de réinitialisation de mot de passe invalide'));
+  }
+});
+
+
+router.delete('/api/capchats-supr/:capchatURL', authenticateToken, async (req, res) => {
+  const capchatURL = req.params.capchatURL;
+
+  try {
+    console.log('Suppression du CapChat :', capchatURL);
+
+    // Récupérer l'ID du CapChat à partir de l'URL
+    const capchat = await query('SELECT ID FROM ImageSets WHERE URLUsage = ?', [capchatURL]);
+
+    if (capchat.length === 0) {
+      console.log('CapChat non trouvé');
+      return res.status(404).json({ success: false, message: 'CapChat non trouvé.' });
+    }
+
+    const capchatID = capchat[0].ID;
+
+    // Supprimer le CapChat de la base de données
+    await query('DELETE FROM ImageSets WHERE ID = ?', [capchatID]);
+
+    // Supprimer tous les fichiers d'images du CapChat
+    const neutresPath = path.join(__dirname, '..', 'views', 'image', 'neutres', capchatURL);
+    const singuliersPath = path.join(__dirname, '..', 'views', 'image', 'singuliers', capchatURL);
+
+    if (fs.existsSync(neutresPath)) {
+      fs.readdirSync(neutresPath).forEach(file => {
+        const filePath = path.join(neutresPath, file);
+        fs.unlinkSync(filePath);
+      });
+      fs.rmdirSync(neutresPath);
+    }
+
+    if (fs.existsSync(singuliersPath)) {
+      fs.readdirSync(singuliersPath).forEach(file => {
+        const filePath = path.join(singuliersPath, file);
+        fs.unlinkSync(filePath);
+      });
+      fs.rmdirSync(singuliersPath);
+    }
+
+    console.log('CapChat supprimé avec succès');
+    res.json({ success: true, message: 'CapChat supprimé avec succès.' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du CapChat :', error);
+    res.status(500).json({ success: false, message: 'Erreur lors de la suppression du CapChat.', error: error.message });
   }
 });
 

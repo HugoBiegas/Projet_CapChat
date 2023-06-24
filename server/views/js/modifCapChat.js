@@ -1,4 +1,7 @@
 let imageSetID;
+const button = document.createElement('button');
+button.className = 'addButton';
+
 function isValidImageFile(file) {
   // Vérifiez si le fichier existe et a une extension valide
   if (!file || !file.name) {
@@ -11,8 +14,6 @@ function isValidImageFile(file) {
   const fileExtension = file.name.toLowerCase();
   return allowedExtensions.some(ext => fileExtension.endsWith(ext));
 }
-
-
 
 document.addEventListener("DOMContentLoaded", function () {
   const urlUsage = window.location.pathname.split("/").pop();
@@ -48,10 +49,13 @@ function createTableRow(imagePath, question, urlUsage) {
 
   const imageCell = document.createElement("td");
   const imageThumbnail = document.createElement("img");
+  imageThumbnail.style.width = "100px";  // Ajoutez cette ligne
+  imageThumbnail.style.objectFit = "contain"; // Ajoutez cette ligne pour préserver les proportions de l'image
+
   console.log(urlUsage);
   imageThumbnail.src = `/views/image/${question ? 'singuliers' : 'neutres'}/${urlUsage}/${imagePath}`;
   imageThumbnail.alt = imagePath;
-  imageThumbnail.classList.add("image-thumbnail");
+  imageThumbnail.classList.add("img-thumbnail"); // Bootstrap class for thumbnail image
   imageCell.appendChild(imageThumbnail);
   row.appendChild(imageCell);
 
@@ -64,20 +68,19 @@ function createTableRow(imagePath, question, urlUsage) {
   row.appendChild(questionCell);
 
   const actionsCell = document.createElement("td");
+
   const modifyButton = document.createElement("button");
   modifyButton.textContent = "Modifier";
+  modifyButton.classList.add("btn", "btn-warning", "mr-2"); // Bootstrap classes for Modify button
   modifyButton.addEventListener("click", () => {
     openModal(imagePath, question || "");
   });
   actionsCell.appendChild(modifyButton);
 
-  // Ajouter une barre oblique entre les boutons
-  const slash = document.createTextNode(" / ");
-  actionsCell.appendChild(slash);
-
   // Ajouter un bouton de suppression
   const deleteButton = document.createElement("button");
   deleteButton.textContent = "Supprimer";
+  deleteButton.classList.add("btn", "btn-danger"); // Bootstrap classes for Delete button
   deleteButton.addEventListener("click", () => {
     deleteImage(imagePath);
   });
@@ -111,8 +114,6 @@ function deleteImage(imagePath) {
 
   }
 }
-
-
 
 function openModal(imagePath, question) {
   const modal = document.getElementById("myModal");
@@ -195,6 +196,16 @@ document.getElementById("addCancelButton").addEventListener("click", function ()
   document.getElementById("addImageModal").style.display = "none";
 });
 
+// Ouvrir la fenêtre modale pour modifier le nom / thème
+document.getElementById("modifyThemeButton").addEventListener("click", function () {
+  document.getElementById("modifyThemeModal").style.display = "block";
+});
+
+// Fermer la fenêtre modale pour modifier le nom / thème
+document.getElementById("modifyThemeCancelButton").addEventListener("click", function () {
+  document.getElementById("modifyThemeModal").style.display = "none";
+});
+
 // Envoyer les données de la nouvelle image au serveur
 document.getElementById("addValidateButton").addEventListener("click", function () {
   const imageName = document.getElementById("addImageNameInput").value;
@@ -215,7 +226,7 @@ document.getElementById("addValidateButton").addEventListener("click", function 
   }
 
   if (imageName.length === 0) {
-    alert("veuiller rentrer un nom pour l'image");
+    alert("Veuillez rentrer un nom pour l'image");
     return;
   }
 

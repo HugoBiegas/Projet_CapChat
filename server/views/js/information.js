@@ -37,7 +37,7 @@ function addCapChatRow(capChat) {
   const row = table.insertRow();
 
   const nameCell = row.insertCell();
-  nameCell.textContent = capChat.nomCapChat;
+  nameCell.textContent = capChat.urlUsage;
 
   const countCell = row.insertCell();
   countCell.textContent = capChat.nombreImages;

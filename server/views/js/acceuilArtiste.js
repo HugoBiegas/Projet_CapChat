@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.length === 0) {
                 const emptyRow = document.createElement("tr");
                 const emptyCell = document.createElement("td");
-                emptyCell.setAttribute("colspan", "5");
+                emptyCell.setAttribute("colspan", "6");
                 emptyCell.textContent = "Vous n'avez pas créé de CapChats.";
                 emptyCell.style.textAlign = "center"; // Centrer le texte
                 emptyCell.style.fontSize = "20px"; // Taille du texte plus grande
@@ -68,6 +68,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 modificationCell.appendChild(modificationButton);
                 row.appendChild(modificationCell);
 
+                const deleteCell = document.createElement("td");
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Supprimer";
+                deleteButton.onclick = function () {
+                    deleteCapChat(capchat.URLUsage);
+                }
+                deleteCell.appendChild(deleteButton);
+                row.appendChild(deleteCell);
+
                 capchatsTable.appendChild(row);
             });
         })
@@ -75,3 +84,23 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error('Erreur:', error);
         });
 });
+
+function deleteCapChat(capchatUrl) {
+    if (confirm("Êtes-vous sûr de vouloir supprimer ce CapChat ?")) {
+        fetch(`/api/capchats-supr/${capchatUrl}`, {
+            method: 'DELETE',
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('CapChat supprimé avec succès.');
+                    window.location.reload();
+                } else {
+                    alert('Erreur lors de la suppression du CapChat.');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+            });
+    }
+}

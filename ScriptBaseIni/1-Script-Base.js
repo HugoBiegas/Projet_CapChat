@@ -28,12 +28,13 @@ con.connect(function (err) {
             Email VARCHAR(255) NOT NULL,
             Password VARCHAR(255) NOT NULL,
             NameArtiste VARCHAR(255) DEFAULT NULL,
+            Role INT DEFAULT 2,
             PRIMARY KEY (ID)
           );`,
           `CREATE TABLE Token (
             ID INT AUTO_INCREMENT,
             UserID INT,
-            PaswordToken boolean DEFAULT false,
+            TypeToken INT DEFAULT 0,
             TokenValue VARCHAR(255) NOT NULL,
             Expired DATE,
             PRIMARY KEY (ID),

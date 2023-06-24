@@ -1,6 +1,4 @@
 tache a faire : 
-    -ajouter la posibiliter de suprimer un capChat
-    -ajouter la posibiliter dans modifications d'un capchat de pouvoir modifier sont théme, son nom
-    -créer la partie informations qui permet a l'utilisateur de changer sont nom, son nomArtiste et sont email
-    -faire admin / liste des ustilisateur avec suprestions 
+    - ajouter la posibiliter dans modifications d'un capchat de pouvoir modifier sont théme, son nom
+    - suprimer utilisateur suprimer le capChat
     - remplire les sprint
