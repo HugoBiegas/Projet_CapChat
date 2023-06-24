@@ -565,19 +565,22 @@ router.get('/accueil', authenticateToken, (req, res) => {
 // Récupérer les informations de l'utilisateur à partir du token
 router.get('/api/user', authenticateToken, async (req, res) => {
   try {
-    const user = await query('SELECT * FROM Users WHERE ID = ?', [req.user.id]);
-    if (user.length === 0) {
+    const userId = req.user.id;
 
+    const userQuery = 'SELECT Username, NameArtiste, Email FROM Users WHERE ID = ?';
+    const results = await query(userQuery, [userId]);
+
+    if (results.length === 0) {
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
-    res.json({ username: user[0].Username, artistName: user[0].NameArtiste });
+    const { Username, NameArtiste, Email } = results[0];
+    res.json({ username: Username, artistName: NameArtiste, email: Email });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur de serveur' });
   }
 });
-
 // Récupérer les CapChats créés par l'utilisateur
 router.get('/api/capchats', authenticateToken, async (req, res) => {
   try {
@@ -927,6 +930,70 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// Récupérer les informations de profil de l'utilisateur connecté
+router.get('/api/user', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const userQuery = 'SELECT Username, NameArtiste, Email FROM Users WHERE ID = ?';
+    connection.query(userQuery, [userId], (error, results) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Erreur de serveur' });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      const { Username, NameArtiste, Email } = results[0];
+      res.json({ username: Username, artistName: NameArtiste, email: Email });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur de serveur' });
+  }
+});
+
+// Mettre à jour le profil de l'utilisateur connecté
+router.post('/api/updateProfile', authenticateToken, async (req, res) => {
+  try {
+    const { username, artistName, email, password } = req.body;
+    const userID = req.user.id;
+
+    // Vérifier si le nom d'utilisateur existe déjà pour un autre utilisateur
+    const existingUsername = await query('SELECT ID FROM Users WHERE Username = ? AND ID != ?', [username, userID]);
+    if (existingUsername.length > 0) {
+      return res.status(400).json({ message: 'Le nom d\'utilisateur est déjà utilisé' });
+    }
+
+    // Vérifier si l'adresse e-mail existe déjà pour un autre utilisateur
+    const existingEmail = await query('SELECT ID FROM Users WHERE Email = ? AND ID != ?', [email, userID]);
+    if (existingEmail.length > 0) {
+      return res.status(400).json({ message: 'L\'adresse e-mail est déjà utilisée' });
+    }
+
+    // Mettre à jour les informations de profil dans la base de données
+    const updateQuery = 'UPDATE Users SET Username = ?, NameArtiste = ?, Email = ? WHERE ID = ?';
+    const updateValues = [username, artistName, email, userID];
+
+    // Mettre à jour le mot de passe si un nouveau mot de passe est fourni
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateQuery += ', Password = ?';
+      updateValues.push(hashedPassword);
+    }
+
+    await query(updateQuery, updateValues);
+
+    res.status(200).json({ message: 'Profil mis à jour avec succès' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur de serveur' });
+  }
+});
+
+
 // Route pour la réinitialisation du mot de passe avec le jeton
 router.get('/reset-password/:token', (req, res) => {
   const token = req.params.token;
@@ -973,11 +1040,5 @@ router.get('*/erreur/:idErreur', (req, res) => {
 router.get('*', (req, res) => {
   res.redirect(req.originalUrl + `/erreur/404?message=${encodeURIComponent('La page existe pas')}`);
 });
-
-
-
-
-
-
 
 module.exports = router;
