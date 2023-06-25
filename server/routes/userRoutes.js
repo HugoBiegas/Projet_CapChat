@@ -688,19 +688,24 @@ router.delete('/api/deleteimage/:imagePath/:urlUsage', authenticateToken, async 
       return res.status(404).json({ message: 'Image introuvable' });
     }
 
+    // Obtenez l'ID du ImageSet associé à l'URLUsage
+    const imageSet = await query('SELECT * FROM ImageSets WHERE URLUsage = ?', [urlUsage]);
+    if (imageSet.length === 0) {
+      return res.status(404).json({ message: 'ImageSet introuvable' });
+    }
+
     // Vérifier si l'image a une question
     const hasQuestion = image[0].Question == null;
 
     if (hasQuestion) {
-      // Vérifier combien d'images singulières restent
-      const singularImages = await query('SELECT ID,ImageSetID FROM Images WHERE Question IS NOT NULL');
+      // Vérifier combien d'images singulières restent pour ce ImageSet
+      const singularImages = await query('SELECT ID,ImageSetID FROM Images WHERE Question != "" AND ImageSetID = ?', [imageSet[0].ID]);
       if (singularImages.length <= 1) {
         return res.status(400).json({ message: 'Vous devez conserver au moins une image singulière pour le CapChat' });
       }
     } else {
-      // Vérifier combien d'images neutres restent
-      const neutralImages = await query('SELECT ID,ImageSetID FROM Images WHERE Question IS NULL');
-      console.log(neutralImages.length + " ;");
+      // Vérifier combien d'images neutres restent pour ce ImageSet
+      const neutralImages = await query('SELECT ID,ImageSetID FROM Images WHERE Question = "" AND ImageSetID = ?', [imageSet[0].ID]);
       if (neutralImages.length <= 7) {
         return res.status(400).json({ message: 'Vous devez avoir au moins 7 images neutres pour le CapChat' });
       }
@@ -721,6 +726,7 @@ router.delete('/api/deleteimage/:imagePath/:urlUsage', authenticateToken, async 
     return res.status(500).json({ message: 'Erreur lors de la suppression de l\'image' });
   }
 });
+
 
 router.post('/api/ajoute/:imageName/:imageSetID', authenticateToken, upload.single('imageFile'), async (req, res) => {
   console.log('début de l ajoute');
