@@ -626,12 +626,15 @@ router.delete('/api/users/:userId', authenticateTokenAdmin, async (req, res) => 
   try {
     await query('DELETE FROM Users WHERE ID = ?', [userId]);
     await query('DELETE FROM Token WHERE UserID = ?', [userId]);
-    const capchatID = capchat[0].ID;
-    // Supprimer le CapChat de la base de données
-    await query('DELETE FROM Images WHERE ImageSetID = ?', [capchatID]);
+    if (capchat.length != 0) {
+      const capchatID = capchat[0].ID;
+      // Supprimer le CapChat de la base de données
+      await query('DELETE FROM Images WHERE ImageSetID = ?', [capchatID]);
 
-    // Supprimer le CapChat de la base de données
-    await query('DELETE FROM ImageSets WHERE ID = ?', [capchatID]);
+      // Supprimer le CapChat de la base de données
+      await query('DELETE FROM ImageSets WHERE ID = ?', [capchatID]);
+
+    }
     res.status(200).json({ success: true, message: 'Utilisateur supprimé avec succès.' });
   } catch (error) {
     console.error(error);
