@@ -11,3 +11,8 @@
     width: 250px;
     object-fit: contain;
 }
+
+#modifyThemeModal {
+    display: none;
+    /* autres styles */
+}

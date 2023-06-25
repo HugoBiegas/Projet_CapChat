@@ -3,14 +3,11 @@ const button = document.createElement('button');
 button.className = 'addButton';
 
 function isValidImageFile(file) {
-  // Vérifiez si le fichier existe et a une extension valide
   if (!file || !file.name) {
     return false;
   }
 
   const allowedExtensions = ['.png', '.jpg'];
-
-  // Vérifiez l'extension du fichier
   const fileExtension = file.name.toLowerCase();
   return allowedExtensions.some(ext => fileExtension.endsWith(ext));
 }
@@ -186,27 +183,72 @@ function updateImage(imagePath, newImagePath, newQuestion, imageFile) {
     });
 }
 
-// Ouvrir la fenêtre modale pour ajouter une image
+// Modification du thème
+document.getElementById("modifyThemeButton").addEventListener("click", function () {
+  const urlUsage = window.location.pathname.split("/").pop();
+  fetch(`/api/themes-users/${urlUsage}`)
+    .then(response => response.json())
+    .then(data => {
+      var themes = data.themes;
+      var selectOptions = '';
+      for (var i = 0; i < themes.length; i++) {
+        selectOptions += '<option value="' + themes[i].ID + '">' + themes[i].Name + '</option>';
+      }
+      document.getElementById('themeNameSelect').innerHTML = selectOptions;
+
+      // Récupérer le nom du capchat actuel et l'insérer dans le champ du nom
+      var currentCapchatName = document.getElementById("capchatName").textContent;
+      document.getElementById('NameCapChatInput').value = currentCapchatName;
+
+      // Définir le thème actuel du selecteur sur l'ID du thème actuel renvoyé par l'API
+      var currentThemeId = data.currentTheme.ThemeID;
+      document.getElementById('themeNameSelect').value = currentThemeId;
+
+      document.getElementById("modifyThemeModal").style.display = "block";
+    })
+    .catch(error => {
+      console.log(error);
+    });
+});
+document.getElementById('modifyThemeValidateButton').addEventListener('click', function () {
+  var selectedThemeId = document.getElementById('themeNameSelect').value;
+  var newName = document.getElementById('NameCapChatInput').value;
+
+  fetch('/api/capchat-update', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      themeId: selectedThemeId,
+      name: newName
+    })
+  })
+    .then(response => {
+      if (response.ok) {
+        document.getElementById('capchatName').textContent = newName;
+        document.getElementById('modifyThemeModal').style.display = 'none';
+      } else {
+        throw new Error('Une erreur s\'est produite lors de la modification du CapChat.');
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    });
+});
+
+// Ajout d'image
 document.getElementById("addImageButton").addEventListener("click", function () {
   document.getElementById("addImageModal").style.display = "block";
 });
 
-// Fermer la fenêtre modale pour ajouter une image
 document.getElementById("addCancelButton").addEventListener("click", function () {
   document.getElementById("addImageModal").style.display = "none";
 });
-
-// Ouvrir la fenêtre modale pour modifier le nom / thème
-document.getElementById("modifyThemeButton").addEventListener("click", function () {
-  document.getElementById("modifyThemeModal").style.display = "block";
-});
-
-// Fermer la fenêtre modale pour modifier le nom / thème
 document.getElementById("modifyThemeCancelButton").addEventListener("click", function () {
   document.getElementById("modifyThemeModal").style.display = "none";
 });
 
-// Envoyer les données de la nouvelle image au serveur
 document.getElementById("addValidateButton").addEventListener("click", function () {
   const imageName = document.getElementById("addImageNameInput").value;
   const question = document.getElementById("addQuestionInput").value;

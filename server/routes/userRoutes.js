@@ -621,10 +621,17 @@ router.get('/api/users', authenticateTokenAdmin, async (req, res) => {
 router.delete('/api/users/:userId', authenticateTokenAdmin, async (req, res) => {
   const userId = req.params.userId;
 
+  const capchat = await query('SELECT ID FROM ImageSets WHERE UserID = ?', [userId]);
+
   try {
     await query('DELETE FROM Users WHERE ID = ?', [userId]);
     await query('DELETE FROM Token WHERE UserID = ?', [userId]);
+    const capchatID = capchat[0].ID;
+    // Supprimer le CapChat de la base de données
+    await query('DELETE FROM Images WHERE ImageSetID = ?', [capchatID]);
 
+    // Supprimer le CapChat de la base de données
+    await query('DELETE FROM ImageSets WHERE ID = ?', [capchatID]);
     res.status(200).json({ success: true, message: 'Utilisateur supprimé avec succès.' });
   } catch (error) {
     console.error(error);
@@ -693,6 +700,7 @@ router.delete('/api/deleteimage/:imagePath/:urlUsage', authenticateToken, async 
     } else {
       // Vérifier combien d'images neutres restent
       const neutralImages = await query('SELECT ID,ImageSetID FROM Images WHERE Question IS NULL');
+      console.log(neutralImages.length + " ;");
       if (neutralImages.length <= 7) {
         return res.status(400).json({ message: 'Vous devez avoir au moins 7 images neutres pour le CapChat' });
       }
@@ -794,15 +802,54 @@ router.get('/api/capChatThemes', async (req, res) => {
     res.status(500).json({ message: 'Erreur de serveur' });
   }
 });
+router.put('/api/capchat-update', async (req, res) => {
+  try {
+    const { themeId, name, NameCapChat } = req.body;
 
-router.get('/api/themes', (req, res) => {
-  connection.query('SELECT * FROM Themes', (error, results) => {
-    if (error) {
-      res.status(500).json({ error });
+    const updateQuery = 'UPDATE ImageSets SET ThemeID = ?, URLUsage = ? WHERE URLUsage = ?';
+    await query(updateQuery, [themeId, name, NameCapChat]);
+
+    res.json({ message: 'ImageSet updated successfully' });
+  } catch (error) {
+    console.error(`An error occurred: ${error.message}`);
+    res.status(500).json({ message: 'Database error' });
+  }
+});
+
+
+router.get('/api/themes', async (req, res) => {
+  try {
+    const themesQuery = 'SELECT * FROM Themes';
+    const themes = await query(themesQuery);
+    res.json(themes);
+  } catch (error) {
+    console.error(`An error occurred: ${error.message}`);
+    res.status(500).json({ message: 'Database error' });
+  }
+});
+
+router.get('/api/themes-users/:urlUsage', async (req, res, next) => {
+  try {
+    const urlUsage = req.params.urlUsage;
+    const themeQuery = 'SELECT * FROM Themes';
+    const userThemeQuery = `SELECT ThemeID FROM ImageSets WHERE URLUsage = '${urlUsage}' LIMIT 1`;
+
+    const themes = await query(themeQuery);
+    const userTheme = await query(userThemeQuery);
+
+    if (userTheme.length > 0) {
+      const response = {
+        themes: themes,
+        currentTheme: userTheme[0]
+      };
+      res.json(response);
     } else {
-      res.json({ themes: results });
+      res.status(404).json({ message: 'No user found with this URL usage' });
     }
-  });
+  } catch (error) {
+    console.error(`An error occurred: ${error.message}`);
+    next(error);
+  }
 });
 
 router.post('/api/adcapchat', upload.array('images'), async (req, res) => {
@@ -1120,6 +1167,8 @@ router.delete('/api/capchats-supr/:capchatURL', authenticateToken, async (req, r
     }
 
     const capchatID = capchat[0].ID;
+    // Supprimer le CapChat de la base de données
+    await query('DELETE FROM Images WHERE ImageSetID = ?', [capchatID]);
 
     // Supprimer le CapChat de la base de données
     await query('DELETE FROM ImageSets WHERE ID = ?', [capchatID]);
