@@ -1,11 +1,10 @@
 // Attends que le DOM soit chargé avant d'exécuter le code
 document.addEventListener('DOMContentLoaded', () => {
-  // Fetch themes from API
   fetch('/api/themes') // Appel à l'API pour obtenir les thèmes
     .then(response => response.json()) // Convertit la réponse en JSON
     .then(data => {
       const themeSelect = document.getElementById('theme'); // Sélectionne l'élément de sélection du thème
-      data.themes.forEach(theme => {
+      data.forEach(theme => {
         const option = document.createElement('option'); // Crée un nouvel élément d'option
         option.value = theme.ID; // Définit la valeur de l'option sur l'ID du thème
         option.textContent = theme.Name; // Définit le texte de l'option sur le nom du thème
@@ -17,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
       themeSelect.appendChild(option); // Ajoute l'option à la liste de sélection des thèmes
     })
     .catch(error => console.error(error)); // Gère les erreurs de la requête
+
 });
 
 // Sélection des éléments
