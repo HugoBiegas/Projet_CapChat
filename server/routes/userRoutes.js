@@ -191,7 +191,7 @@ router.get('/deconnexion', authenticateToken, (req, res) => {
     res.clearCookie('authToken');
 
     // Redirigez l'utilisateur vers '/'
-    res.redirect('/');
+    res.redirect('/connexion');
   });
 });
 
@@ -621,20 +621,41 @@ router.get('/api/users', authenticateTokenAdmin, async (req, res) => {
 router.delete('/api/users/:userId', authenticateTokenAdmin, async (req, res) => {
   const userId = req.params.userId;
 
-  const capchat = await query('SELECT ID FROM ImageSets WHERE UserID = ?', [userId]);
+  const capchats = await query('SELECT ID, URLUsage FROM ImageSets WHERE UserID = ?', [userId]);
 
   try {
     await query('DELETE FROM Users WHERE ID = ?', [userId]);
     await query('DELETE FROM Token WHERE UserID = ?', [userId]);
-    if (capchat.length != 0) {
-      const capchatID = capchat[0].ID;
+
+    for (let i = 0; i < capchats.length; i++) {
+      const capchatID = capchats[i].ID;
+      const capchatURL = capchats[i].URLUsage;
+
       // Supprimer le CapChat de la base de données
       await query('DELETE FROM Images WHERE ImageSetID = ?', [capchatID]);
-
-      // Supprimer le CapChat de la base de données
       await query('DELETE FROM ImageSets WHERE ID = ?', [capchatID]);
 
+      // Supprimer tous les fichiers d'images du CapChat
+      const neutresPath = path.join(__dirname, '..', 'views', 'image', 'neutres', capchatURL);
+      const singuliersPath = path.join(__dirname, '..', 'views', 'image', 'singuliers', capchatURL);
+
+      if (fs.existsSync(neutresPath)) {
+        fs.readdirSync(neutresPath).forEach(file => {
+          const filePath = path.join(neutresPath, file);
+          fs.unlinkSync(filePath);
+        });
+        fs.rmdirSync(neutresPath);
+      }
+
+      if (fs.existsSync(singuliersPath)) {
+        fs.readdirSync(singuliersPath).forEach(file => {
+          const filePath = path.join(singuliersPath, file);
+          fs.unlinkSync(filePath);
+        });
+        fs.rmdirSync(singuliersPath);
+      }
     }
+
     res.status(200).json({ success: true, message: 'Utilisateur supprimé avec succès.' });
   } catch (error) {
     console.error(error);
@@ -814,7 +835,7 @@ router.get('/api/capChatThemes', async (req, res) => {
 router.put('/api/capchat-update', async (req, res) => {
   try {
     const { themeId, name, NameCapChat } = req.body;
-
+    console.log(themeId + " : " + name + " : " + NameCapChat);
     const updateQuery = 'UPDATE ImageSets SET ThemeID = ?, URLUsage = ? WHERE URLUsage = ?';
     await query(updateQuery, [themeId, name, NameCapChat]);
 

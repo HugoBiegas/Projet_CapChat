@@ -213,6 +213,7 @@ document.getElementById("modifyThemeButton").addEventListener("click", function 
 document.getElementById('modifyThemeValidateButton').addEventListener('click', function () {
   var selectedThemeId = document.getElementById('themeNameSelect').value;
   var newName = document.getElementById('NameCapChatInput').value;
+  const urlUsage = window.location.pathname.split("/").pop();
 
   fetch('/api/capchat-update', {
     method: 'PUT',
@@ -221,13 +222,19 @@ document.getElementById('modifyThemeValidateButton').addEventListener('click', f
     },
     body: JSON.stringify({
       themeId: selectedThemeId,
-      name: newName
+      name: newName,
+      NameCapChat: urlUsage,
     })
   })
     .then(response => {
       if (response.ok) {
         document.getElementById('capchatName').textContent = newName;
         document.getElementById('modifyThemeModal').style.display = 'none';
+
+        // Modifier l'URL sans recharger la page
+        const newUrl = window.location.pathname.replace(urlUsage, newName);
+        window.location.href = newUrl;
+
       } else {
         throw new Error('Une erreur s\'est produite lors de la modification du CapChat.');
       }
